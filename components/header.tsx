@@ -26,20 +26,30 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2.5">
           <Hexagon className="h-7 w-7 text-primary" strokeWidth={1.5} />
           <span className="text-lg font-semibold tracking-tight text-foreground">
-            Conneco Right
+            ArtVault
           </span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          {["Product", "About", "Pricing"].map((item) => (
-            <Link
-              key={item}
-              href={`#${item.toLowerCase()}`}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {item}
-            </Link>
-          ))}
+          {["Product", "Pricing", "About"].map((item) => {
+            // Here is how you can use if/else logic inside the map!
+            // Example: "About" goes to the /about page, others go to the homepage sections
+            let href = `/#${item.toLowerCase()}`;
+            if (item === "About") {
+              href = "/about";
+            }
+
+            return (
+              <Link
+                key={item}
+                href={href}
+                className="group relative py-2 text-sm font-medium tracking-widest uppercase text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item}
+                <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -72,16 +82,24 @@ export function Header() {
       {mobileOpen && (
         <div className="border-t border-border bg-background/95 backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-1 px-6 py-4">
-            {["Product", "About", "Pricing"].map((item) => (
-              <Link
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-md px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                {item}
-              </Link>
-            ))}
+            {["Product", "Pricing", "About"].map((item) => {
+              // Same if/else logic for the mobile menu
+              let href = `/#${item.toLowerCase()}`;
+              if (item === "About") {
+                href = "/about";
+              }
+
+              return (
+                <Link
+                  key={item}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md px-3 py-3 text-sm font-medium tracking-widest uppercase text-muted-foreground transition-all hover:bg-secondary hover:text-foreground hover:pl-5"
+                >
+                  {item}
+                </Link>
+              );
+            })}
             <div className="mt-3 flex flex-col gap-2 border-t border-border pt-4">
               <Show when="signed-out">
                 <SignInButton>

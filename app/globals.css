@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #FDF8F3;
+  /* Soft Ivory - Main canvas color */
+  --foreground: #1C1C1C;
+  /* Charcoal Black - Main text for high readability */
+
+  --muted: #F5EFE9;
+  /* Light Beige - Used for inactive tabs or subtle backgrounds */
+  --muted-foreground: #6B6B6B;
+  /* Medium Gray - For descriptions and secondary info */
+
+  --card: #FFFFFF;
+  /* Pure White - Makes cards pop against the ivory background */
+  --card-foreground: #1C1C1C;
+
+  --border: #E8E0D7;
+  /* Warm Stone - Subtle borders that match the palette */
+
+  --accent: #A47864;
+  /* Mocha Mousse - Key accent for highlights and icons */
+  --accent-foreground: #FDF8F3;
+
+  --primary: #1C1C1C;
+  /* Solid Black - Primary buttons for a premium "editorial" look */
+  --primary-foreground: #FDF8F3;
+
+  --secondary: #E8E0D7;
+  --secondary-foreground: #1C1C1C;
+
+  --ring: #A47864;
+  /* Focus ring color matching the accent */
+  --radius: 0.5rem;
+  /* Tighter radius for a sharper, more professional feel */
+}
+
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: oklch(0.6 0.15 180 / 0.3);
+  color: var(--foreground);
 }

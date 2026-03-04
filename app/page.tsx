@@ -2,6 +2,9 @@
 import { useEffect, useState } from 'react'
 import { useSession, useUser } from '@clerk/nextjs'
 import { createClient } from '@supabase/supabase-js'
+import { Hero } from '@/components/hero'
+import { Features } from '@/components/features'
+import { Pricing } from '@/components/pricing'
 
 export default function Home() {
   const [tasks, setTasks] = useState<any[]>([])
@@ -55,25 +58,9 @@ export default function Home() {
 
   return (
     <div>
-      <h1>Tasks</h1>
-
-      {loading && <p>Loading...</p>}
-
-      {!loading && tasks.length > 0 && tasks.map((task: any) => <p key={task.id}>{task.name}</p>)}
-
-      {!loading && tasks.length === 0 && <p>No tasks found</p>}
-
-      <form onSubmit={createTask}>
-        <input
-          autoFocus
-          type="text"
-          name="name"
-          placeholder="Enter new task"
-          onChange={(e) => setName(e.target.value)}
-          value={name}
-        />
-        <button type="submit">Add</button>
-      </form>
+      <Hero />
+      <Features />
+      <Pricing />
     </div>
   )
 }

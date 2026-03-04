@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,11 +35,9 @@ export default function RootLayout({
         <body
           className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
         >
-          <Header />
-          <main className="min-h-screen">
+          <AppShell>
             {children}
-          </main>
-          <Footer />
+          </AppShell>
         </body>
       </html>
     </ClerkProvider>

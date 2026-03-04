@@ -26,7 +26,7 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2.5">
           <Hexagon className="h-7 w-7 text-primary" strokeWidth={1.5} />
           <span className="text-lg font-semibold tracking-tight text-foreground">
-            ArtVault
+            Conneco Right
           </span>
         </Link>
 
@@ -54,16 +54,12 @@ export function Header() {
 
         <div className="hidden items-center gap-3 md:flex">
           <Show when="signed-out">
-            <SignInButton>
-              <button className="rounded-md px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer">
-                Sign In
-              </button>
-            </SignInButton>
-            <SignUpButton>
-              <button className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 cursor-pointer">
-                Sign Up
-              </button>
-            </SignUpButton>
+            <Link href="/sign-in" className="rounded-md px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer inline-block">
+              Sign In
+            </Link>
+            <Link href="/sign-up" className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 cursor-pointer inline-block">
+              Sign Up
+            </Link>
           </Show>
           <Show when="signed-in">
             <UserButton />
@@ -102,16 +98,12 @@ export function Header() {
             })}
             <div className="mt-3 flex flex-col gap-2 border-t border-border pt-4">
               <Show when="signed-out">
-                <SignInButton>
-                  <button className="rounded-md px-3 py-2.5 text-center text-sm text-muted-foreground transition-colors hover:text-foreground w-full cursor-pointer">
-                    Sign In
-                  </button>
-                </SignInButton>
-                <SignUpButton>
-                  <button className="rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-medium text-primary-foreground w-full cursor-pointer">
-                    Sign Up
-                  </button>
-                </SignUpButton>
+                <Link href="/sign-in" className="rounded-md px-3 py-2.5 text-center text-sm text-muted-foreground transition-colors hover:text-foreground w-full cursor-pointer inline-block">
+                  Sign In
+                </Link>
+                <Link href="/sign-up" className="rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-medium text-primary-foreground w-full cursor-pointer inline-block mt-2">
+                  Sign Up
+                </Link>
               </Show>
               <Show when="signed-in">
                 <div className="flex justify-center py-2.5">

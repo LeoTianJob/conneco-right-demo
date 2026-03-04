@@ -26,7 +26,7 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2.5">
           <Hexagon className="h-7 w-7 text-primary" strokeWidth={1.5} />
           <span className="text-lg font-semibold tracking-tight text-foreground">
-            ArtVault
+            Conneco Right
           </span>
         </Link>
 

@@ -13,9 +13,9 @@ import { Footer } from "@/components/footer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "About – ArtVault",
+    title: "About – Conneco Right",
     description:
-        "Learn about the team and mission behind ArtVault, the creative asset management platform built to protect and amplify the work of artists worldwide.",
+        "Learn about the team and mission behind Conneco Right, the creative asset management platform built to protect and amplify the work of artists worldwide.",
 };
 
 const values = [
@@ -107,7 +107,7 @@ export default function AboutPage() {
                         </h1>
 
                         <p className="mt-6 text-pretty text-lg leading-relaxed text-muted-foreground md:text-xl">
-                            ArtVault was born from frustration. Mia lost three years of digital
+                            Conneco Right was born from frustration. Mia lost three years of digital
                             work when a hard drive failed. James kept hearing the same story
                             from artists everywhere. So we built what should have existed all
                             along.
@@ -136,7 +136,7 @@ export default function AboutPage() {
                                 </p>
                                 <p className="leading-relaxed">
                                     We exist to change that — with software built specifically for
-                                    creative people, not repurposed enterprise tools. ArtVault
+                                    creative people, not repurposed enterprise tools. Conneco Right
                                     gives every artist, from a bedroom illustrator to a major
                                     museum, the same level of protection that the world&apos;s most
                                     valuable collections have always had.
@@ -187,7 +187,7 @@ export default function AboutPage() {
                                 Team
                             </p>
                             <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-                                The people behind ArtVault
+                                The people behind Conneco Right
                             </h2>
                             <p className="mt-4 text-pretty text-muted-foreground">
                                 A small team of builders, curators, and designers who care
@@ -298,7 +298,7 @@ export default function AboutPage() {
                                     Ready to protect your work?
                                 </h2>
                                 <p className="mx-auto mt-4 max-w-md text-pretty text-muted-foreground">
-                                    Join over 50,000 artists who trust ArtVault to keep their
+                                    Join over 50,000 artists who trust Conneco Right to keep their
                                     creative legacy safe, organised, and theirs.
                                 </p>
                                 <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">

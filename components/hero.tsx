@@ -68,7 +68,7 @@ export function Hero() {
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-primary/5">
           <Image
             src="/images/hero-art.jpg"
-            alt="ArtVault digital asset management dashboard showcasing creative assets"
+            alt="Conneco Right digital asset management dashboard showcasing creative assets"
             width={1200}
             height={675}
             className="w-full object-cover"

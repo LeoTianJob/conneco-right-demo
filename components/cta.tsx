@@ -13,7 +13,7 @@ export function CTA() {
             Ready to protect your creative work?
           </h2>
           <p className="relative mt-4 text-pretty text-muted-foreground">
-            Join thousands of artists and institutions who trust ArtVault to
+            Join thousands of artists and institutions who trust Conneco Right to
             manage and safeguard their most valuable assets.
           </p>
           <div className="relative mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">

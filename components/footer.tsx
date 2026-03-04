@@ -18,7 +18,7 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-2.5">
               <Hexagon className="h-6 w-6 text-primary" strokeWidth={1.5} />
               <span className="text-base font-semibold text-foreground">
-                ArtVault
+                Conneco Right
               </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
@@ -52,7 +52,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
           <p className="text-xs text-muted-foreground">
-            {new Date().getFullYear()} ArtVault, Inc. All rights reserved.
+            {new Date().getFullYear()} Conneco Right, Inc. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             {["Twitter", "GitHub", "LinkedIn"].map((social) => (

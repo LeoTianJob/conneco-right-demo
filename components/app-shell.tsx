@@ -7,8 +7,9 @@ import { Footer } from "@/components/footer";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isDashboard = pathname.startsWith("/dashboard");
+  const isAdmin = pathname.startsWith("/admin");
 
-  if (isDashboard) {
+  if (isDashboard || isAdmin) {
     return <>{children}</>;
   }
 

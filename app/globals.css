@@ -14,6 +14,8 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -54,6 +56,10 @@
 
   --ring: #A47864;
   /* Focus ring color matching the accent */
+
+  --destructive: #dc2626;
+  --destructive-foreground: #FDF8F3;
+
   --radius: 0.5rem;
   /* Tighter radius for a sharper, more professional feel */
 }

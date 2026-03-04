@@ -2,12 +2,20 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X, Hexagon } from "lucide-react";
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { Show, useUser } from "@clerk/nextjs";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useUser();
+
+  const initials = user
+    ? ([user.firstName, user.lastName].filter(Boolean).map((n) => n![0].toUpperCase()).join("") ||
+      user.emailAddresses[0]?.emailAddress[0].toUpperCase() ||
+      "?")
+    : "?";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -62,7 +70,19 @@ export function Header() {
             </Link>
           </Show>
           <Show when="signed-in">
-            <UserButton />
+            <Link
+              href="/profile"
+              className="flex h-9 w-9 items-center justify-center rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-offset-1 hover:ring-foreground transition-all"
+              title="View profile"
+            >
+              {user?.imageUrl ? (
+                <Image src={user.imageUrl} alt="Profile" width={36} height={36} className="h-full w-full object-cover" />
+              ) : (
+                <span className="bg-primary text-primary-foreground text-sm font-semibold h-full w-full flex items-center justify-center">
+                  {initials}
+                </span>
+              )}
+            </Link>
           </Show>
         </div>
 
@@ -106,9 +126,22 @@ export function Header() {
                 </Link>
               </Show>
               <Show when="signed-in">
-                <div className="flex justify-center py-2.5">
-                  <UserButton />
-                </div>
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full overflow-hidden border border-border flex-shrink-0">
+                    {user?.imageUrl ? (
+                      <Image src={user.imageUrl} alt="Profile" width={28} height={28} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="bg-primary text-primary-foreground text-xs font-semibold h-full w-full flex items-center justify-center">
+                        {initials}
+                      </span>
+                    )}
+                  </span>
+                  My Profile
+                </Link>
               </Show>
             </div>
           </div>

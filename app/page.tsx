@@ -2,8 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useSession, useUser } from '@clerk/nextjs'
 import { createClient } from '@supabase/supabase-js'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
 import { Hero } from '@/components/hero'
 import { Features } from '@/components/features'
 import { Pricing } from '@/components/pricing'
@@ -60,11 +58,9 @@ export default function Home() {
 
   return (
     <div>
-      <Header />
       <Hero />
       <Features />
       <Pricing />
-      <Footer />
     </div>
   )
 }

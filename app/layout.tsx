@@ -1,14 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import {
-  ClerkProvider,
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import "./globals.css";
-import Link from "next/link";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -41,24 +36,11 @@ export default function RootLayout({
         <body
           className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
         >
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
-            <Show when="signed-out">
-              <SignInButton>
-                <button className="cursor-pointer">
-                  Sign Up
-                </button>
-              </SignInButton>
-              <SignUpButton>
-                <button className="bg-[#6c47ff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
-                  Sign Up
-                </button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
-              <UserButton />
-            </Show>
-          </header>
-          {children}
+          <Header />
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <Footer />
         </body>
       </html>
     </ClerkProvider>

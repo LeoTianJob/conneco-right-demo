@@ -11,6 +11,8 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useUser();
 
+  const headerItems: string[] = ["Features", "Creators", "Pricing", "Our Story", "Contact"];
+
   const initials = user
     ? ([user.firstName, user.lastName].filter(Boolean).map((n) => n![0].toUpperCase()).join("") ||
       user.emailAddresses[0]?.emailAddress[0].toUpperCase() ||
@@ -39,11 +41,11 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          {["Product", "Pricing", "About"].map((item) => {
+          {headerItems.map((item) => {
             // Here is how you can use if/else logic inside the map!
             // Example: "About" goes to the /about page, others go to the homepage sections
             let href = `/#${item.toLowerCase()}`;
-            if (item === "About") {
+            if (item === "Our Story") {
               href = "/about";
             }
 
@@ -98,10 +100,10 @@ export function Header() {
       {mobileOpen && (
         <div className="border-t border-border bg-background/95 backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-1 px-6 py-4">
-            {["Product", "Pricing", "About"].map((item) => {
+            {headerItems.map((item) => {
               // Same if/else logic for the mobile menu
               let href = `/#${item.toLowerCase()}`;
-              if (item === "About") {
+              if (item === "Our Story") {
                 href = "/about";
               }
 

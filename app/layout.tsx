@@ -1,7 +1,8 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
-import { AppShell } from "@/components/app-shell";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import "./globals.css";
 
 const inter = Inter({
@@ -25,10 +26,6 @@ export const metadata: Metadata = {
     "The premium creative asset management platform for independent artists and art institutions. Protect, organize, and showcase your work.",
 };
 
-export const viewport: Viewport = {
-  themeColor: "#09090b",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -40,9 +37,9 @@ export default function RootLayout({
         <body
           className={`${inter.variable} ${jetbrainsMono.variable} ${playfair.variable} font-sans antialiased`}
         >
-          <AppShell>
-            {children}
-          </AppShell>
+          <Header />
+          <main>{children}</main>
+          <Footer />
         </body>
       </html>
     </ClerkProvider>

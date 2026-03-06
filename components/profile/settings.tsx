@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Camera, Eye, EyeOff, Save, Loader2, LogOut } from "lucide-react";
-import { useClerk } from "@clerk/nextjs";
+import { useClerk, useUser, useReverification, useSession } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { type UserProfile } from "./types";
 
@@ -19,32 +19,169 @@ interface ProfileSettingsProps {
   user: UserProfile | null | undefined;
 }
 
-export function Settings({ user }: ProfileSettingsProps) {
+interface ReverifyParams {
+  level?: string;
+  complete: () => void;
+  cancel: () => void;
+}
+
+export function Settings({ user: initialUser }: ProfileSettingsProps) {
+  const { user } = useUser();
   const [profile, setProfile] = useState<ProfileData>({
-    imageUrl: user?.imageUrl || "/images/art-1.jpg",
-    firstName: user?.firstName ?? "",
-    lastName: user?.lastName ?? "",
-    email: user?.email ?? "",
-    phone: user?.phone ?? "",
+    imageUrl: initialUser?.imageUrl || "/images/art-1.jpg",
+    firstName: initialUser?.firstName ?? "",
+    lastName: initialUser?.lastName ?? "",
+    email: initialUser?.email ?? "",
+    phone: initialUser?.phone ?? "",
   });
 
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  // current password
+  // const [currentPassword, setCurrentPassword] = useState("");
+  // const [showCurrent, setShowCurrent] = useState(false);
+  // // new password
+  // const [password, setPassword] = useState("");
+  // // const [showPassword, setShowPassword] = useState(false);
+  // // confirm new password
+  // const [confirmPassword, setConfirmPassword] = useState("");
+  // // const [showConfirm, setShowConfirm] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  function handleSave() {
-    setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    }, 1200);
-  }
+  const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [reverifyParams, setReverifyParams] = useState<ReverifyParams | null>(
+    null
+  );
 
   const { signOut } = useClerk();
+  const { session } = useSession();
+
+  const handleSave = useReverification(
+    async () => {
+      if (!user) return;
+
+      setSaving(true);
+      setError(null);
+      setStatusMessage(null);
+
+      try {
+        const updates: string[] = [];
+
+        // 1. Update Names
+        if (
+          profile.firstName !== initialUser?.firstName ||
+          profile.lastName !== initialUser?.lastName
+        ) {
+          await user.update({
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+          });
+          updates.push("Name");
+        }
+
+        // 2. Update Password (Commented out)
+        /*
+        if (password) {
+          if (!currentPassword) {
+            throw new Error("Current password is required to set a new password.");
+          }
+          if (password !== confirmPassword) {
+            throw new Error("New passwords do not match.");
+          }
+          await user.updatePassword({
+            currentPassword,
+            newPassword: password,
+          });
+          updates.push("Password");
+          setPassword("");
+          setConfirmPassword("");
+          setCurrentPassword("");
+        }
+        */
+
+        // 3. Initiate Email Change (verification usually required)
+        if (profile.email !== initialUser?.email) {
+          await user.createEmailAddress({ email: profile.email });
+          updates.push(
+            "Email change initiated (please check your inbox for verification)"
+          );
+        }
+
+        // 4. Initiate Phone Change (verification usually required)
+        if (profile.phone !== initialUser?.phone) {
+          await user.createPhoneNumber({ phoneNumber: profile.phone });
+          updates.push("Phone change initiated (verification required)");
+        }
+
+        if (updates.length > 0) {
+          setSaved(true);
+          setStatusMessage(`Successfully updated: ${updates.join(", ")}`);
+          setTimeout(() => setSaved(false), 3000);
+        } else {
+          setStatusMessage("No changes detected.");
+        }
+      } catch (err: unknown) {
+        console.error("Error updating profile:", err);
+        if (err instanceof Error) {
+          const clerkError = (err as {
+            errors?: Array<{ message: string }>;
+          }).errors?.[0]?.message;
+          setError(clerkError || err.message || "An unexpected error occurred.");
+        } else {
+          setError("An unexpected error occurred.");
+        }
+      } finally {
+        setSaving(false);
+      }
+    },
+    {
+      onNeedsReverification: (params) => {
+        setReverifyParams(params);
+        setSaving(false);
+        setError("Security verification required to change sensitive fields.");
+      },
+    }
+  );
+
+  /*
+  async function handleConfirmVerification() {
+    if (!reverifyParams || !session || !currentPassword) {
+      setError("Please enter your current password to verify.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      // 1. Attempt verification with current password
+      await session.attemptFirstFactorVerification({
+        strategy: "password",
+        password: currentPassword,
+      });
+
+      // 2. If successful, clear params and trigger original action retry
+      const completeFn = reverifyParams.complete;
+      setReverifyParams(null);
+      await completeFn();
+    } catch (err: unknown) {
+      console.error("Verification failed:", err);
+      if (err instanceof Error) {
+        const clerkError = (err as {
+          errors?: Array<{ message: string }>;
+        }).errors?.[0]?.message;
+        setError(clerkError || err.message || "Verification failed. Please check your password.");
+      } else {
+        setError("Verification failed. Please check your password.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+  */
+
+
 
   return (
     <div className="flex h-full flex-col">
@@ -149,12 +286,42 @@ export function Settings({ user }: ProfileSettingsProps) {
             </div>
           </div>
 
-          {/* Password */}
+          {/* Password Section (Commented out) */}
+          {/* 
           <div className="rounded-xl border border-border bg-card p-6">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-              Change Password
+              Security
             </h2>
             <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  Current Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCurrent ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password to make changes"
+                    className="h-10 w-full rounded-lg border border-border bg-background px-3 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showCurrent ? "Hide password" : "Show password"}
+                  >
+                    {showCurrent ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Required for password updates.
+                </p>
+              </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">
                   New Password
@@ -183,7 +350,7 @@ export function Settings({ user }: ProfileSettingsProps) {
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">
-                  Confirm Password
+                  Confirm New Password
                 </label>
                 <div className="relative">
                   <input
@@ -209,6 +376,38 @@ export function Settings({ user }: ProfileSettingsProps) {
               </div>
             </div>
           </div>
+          */}
+
+          {/* Status Messages */}
+          {(error || statusMessage) && (
+            <div
+              className={cn(
+                "rounded-lg p-4 text-sm font-medium",
+                error
+                  ? "bg-destructive/10 text-destructive border border-destructive/20"
+                  : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+              )}
+            >
+              <div className="flex flex-col gap-3">
+                <p>{error || statusMessage}</p>
+                {/* 
+                {reverifyParams && (
+                  <button
+                    onClick={handleConfirmVerification}
+                    disabled={saving}
+                    className="flex w-fit items-center gap-2 rounded-lg bg-destructive px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-destructive/90 disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      "Confirm & Save Changes"
+                    )}
+                  </button>
+                )}
+                */}
+              </div>
+            </div>
+          )}
 
           {/* Save Button */}
           <div className="flex items-center justify-end gap-3 pb-6">

@@ -3,28 +3,21 @@
 import { useState, useCallback } from "react";
 import { Sidebar } from "@/components/profile/sidebar";
 import { MobileNav } from "@/components/profile/mobile-nav";
-import { AssetGallery, type Asset } from "@/components/profile/asset-gallery";
+import { AssetGallery } from "@/components/profile/asset-gallery";
 import { AssetDetail } from "@/components/profile/asset-detail";
 import { CopyrightsView } from "@/components/profile/copyrights-view";
 import { AnalyticsView } from "@/components/profile/analytics-view";
-import { ProfileSettings } from "@/components/profile/settings";
+import { Settings } from "@/components/profile/settings";
 import { cn } from "@/lib/utils";
+import { type Asset, type UserProfile } from "./types";
 
-// Define a minimal ClerkUser interface
-interface ClerkUser {
-    id: string;
-    firstName: string | null;
-    lastName: string | null;
-    imageUrl: string;
-    email: string;
-    phone: string;
-}
+
 
 interface DashboardClientProps {
     assets: Asset[];
     storageUsed: number;
     storageTotal: number;
-    user: ClerkUser | null | undefined;
+    user: UserProfile | null | undefined;
 }
 
 export function Dashboard({
@@ -86,7 +79,7 @@ export function Dashboard({
                         />
                     )}
                     {activeView === "analytics" && <AnalyticsView />}
-                    {activeView === "settings" && <ProfileSettings user={user} />}
+                    {activeView === "settings" && <Settings user={user} />}
                 </div>
 
                 {activeView === "gallery" && (

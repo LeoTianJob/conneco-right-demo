@@ -5,9 +5,10 @@ import Image from "next/image";
 import { Camera, Eye, EyeOff, Save, Loader2, LogOut } from "lucide-react";
 import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import { type UserProfile } from "./types";
 
 interface ProfileData {
-  avatar: string;
+  imageUrl: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -15,19 +16,12 @@ interface ProfileData {
 }
 
 interface ProfileSettingsProps {
-  user: {
-    id: string;
-    firstName: string | null;
-    lastName: string | null;
-    imageUrl: string;
-    email: string;
-    phone: string;
-  } | null | undefined;
+  user: UserProfile | null | undefined;
 }
 
-export function ProfileSettings({ user }: ProfileSettingsProps) {
+export function Settings({ user }: ProfileSettingsProps) {
   const [profile, setProfile] = useState<ProfileData>({
-    avatar: user?.imageUrl || "/images/art-1.jpg",
+    imageUrl: user?.imageUrl || "/images/art-1.jpg",
     firstName: user?.firstName ?? "",
     lastName: user?.lastName ?? "",
     email: user?.email ?? "",
@@ -83,7 +77,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
             <div className="flex items-center gap-5">
               <div className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-border">
                 <Image
-                  src={profile.avatar}
+                  src={profile.imageUrl}
                   alt="Avatar"
                   fill
                   className="object-cover"

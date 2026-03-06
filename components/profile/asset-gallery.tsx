@@ -12,19 +12,7 @@ import {
   List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-export interface Asset {
-  id: string;
-  title: string;
-  src: string;
-  type: "image" | "video";
-  status: "Protected" | "Processing" | "Pending";
-  creator: string;
-  timestamp: string;
-  license: string;
-  dimensions?: string;
-  fileSize?: string;
-}
+import { type Asset } from "./types";
 
 interface AssetGalleryProps {
   assets: Asset[];

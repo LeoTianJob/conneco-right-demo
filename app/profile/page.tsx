@@ -1,7 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Dashboard } from "@/components/profile/dashboard";
-import { type Asset } from "@/components/profile/asset-gallery";
+import { type Asset, type UserProfile } from "@/components/profile/types";
 
 const sampleAssets: Asset[] = [
     {
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
     const primaryPhone = user.primaryPhoneNumber?.phoneNumber ||
         user.phoneNumbers.find(p => p.id === user.primaryPhoneNumberId)?.phoneNumber || "";
 
-    const sanitizedUser = {
+    const sanitizedUser: UserProfile = {
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Camera, Eye, EyeOff, Save, Loader2 } from "lucide-react";
+import { Camera, Eye, EyeOff, Save, Loader2, LogOut } from "lucide-react";
+import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 import type { UserResource } from "@clerk/nextjs/types";
@@ -44,16 +45,27 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
     }, 1200);
   }
 
+  const { signOut } = useClerk();
+
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="border-b border-border bg-card px-6 py-4">
-        <h1 className="text-xl font-semibold text-foreground">
-          Profile Settings
-        </h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Manage your account information and preferences.
-        </p>
+      <div className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">
+            Profile Settings
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Manage your account information and preferences.
+          </p>
+        </div>
+        <button
+          onClick={() => signOut({ redirectUrl: "/" })}
+          className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">

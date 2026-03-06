@@ -203,7 +203,7 @@ function GalleryCard({
           src={asset.src}
           alt={asset.title}
           width={400}
-          height={asset.type === "video" ? 225 : 300 + (Math.random() > 0.5 ? 100 : 0)}
+          height={asset.type === "video" ? 225 : 300}
           className="w-full object-cover"
         />
         {asset.type === "video" && (

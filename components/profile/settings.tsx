@@ -6,8 +6,6 @@ import { Camera, Eye, EyeOff, Save, Loader2, LogOut } from "lucide-react";
 import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
-import type { UserResource } from "@clerk/nextjs/types";
-
 interface ProfileData {
   avatar: string;
   firstName: string;
@@ -17,7 +15,14 @@ interface ProfileData {
 }
 
 interface ProfileSettingsProps {
-  user: UserResource | null | undefined;
+  user: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    imageUrl: string;
+    email: string;
+    phone: string;
+  } | null | undefined;
 }
 
 export function ProfileSettings({ user }: ProfileSettingsProps) {
@@ -25,8 +30,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
     avatar: user?.imageUrl || "/images/art-1.jpg",
     firstName: user?.firstName ?? "",
     lastName: user?.lastName ?? "",
-    email: user?.primaryEmailAddress?.emailAddress ?? "",
-    phone: user?.primaryPhoneNumber?.phoneNumber ?? "",
+    email: user?.email ?? "",
+    phone: user?.phone ?? "",
   });
 
   const [password, setPassword] = useState("");
@@ -113,9 +118,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                     label="First Name"
                     value={profile.firstName ?? ""}
                     onChange={(val) =>
-                      setProfile((p) => ({ ...p, email: val }))
+                      setProfile((p) => ({ ...p, firstName: val }))
                     }
-                    type="email"
                     placeholder="First Name"
                   />
                 </div>
@@ -124,9 +128,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                     label="Last Name"
                     value={profile.lastName ?? ""}
                     onChange={(val) =>
-                      setProfile((p) => ({ ...p, email: val }))
+                      setProfile((p) => ({ ...p, lastName: val }))
                     }
-                    type="email"
                     placeholder="Last Name"
                   />
                 </div>

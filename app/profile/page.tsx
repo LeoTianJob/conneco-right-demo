@@ -1,16 +1,7 @@
-"use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { useUser, useClerk } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { Sidebar } from "@/components/profile/sidebar";
-import { MobileNav } from "@/components/profile/mobile-nav";
-import { AssetGallery, type Asset } from "@/components/profile/asset-gallery";
-import { AssetDetail } from "@/components/profile/asset-detail";
-import { CopyrightsView } from "@/components/profile/copyrights-view";
-import { AnalyticsView } from "@/components/profile/analytics-view";
-import { ProfileSettings } from "@/components/profile/profile-settings";
-import { cn } from "@/lib/utils";
+import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { Dashboard } from "@/components/profile/dashboard";
+import { type Asset } from "@/components/profile/asset-gallery";
 
 const sampleAssets: Asset[] = [
     {
@@ -114,100 +105,36 @@ const sampleAssets: Asset[] = [
 const STORAGE_USED = 45;
 const STORAGE_TOTAL = 100;
 
-export default function DashboardPage() {
-    const { user, isLoaded } = useUser();
-    const { signOut } = useClerk();
-    const router = useRouter();
-    const [activeView, setActiveView] = useState("gallery");
-    const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+export default async function DashboardPage() {
+    const user = await currentUser();
 
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
-    const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
+    if (!user) {
+        redirect("/sign-in");
+    }
 
-    useEffect(() => {
-        if (isLoaded && !user) {
-            router.replace("/sign-in");
-        }
-        if (user) {
-            setFirstName(user.firstName ?? "");
-            setLastName(user.lastName ?? "");
-        }
-    }, [isLoaded, user, router]);
+    // Extract primary email and phone safely for the client component
+    // Note: While these getters exist, we extract just the strings to ensure easy serialization for the client component.
+    const primaryEmail = user.primaryEmailAddress?.emailAddress ||
+        user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress || "";
 
-    const selectedAsset =
-        sampleAssets.find((a) => a.id === selectedAssetId) || null;
+    const primaryPhone = user.primaryPhoneNumber?.phoneNumber ||
+        user.phoneNumbers.find(p => p.id === user.primaryPhoneNumberId)?.phoneNumber || "";
 
-    const handleSelectAsset = useCallback((id: string) => {
-        setSelectedAssetId((prev) => (prev === id ? null : id));
-        setActiveView("gallery");
-    }, []);
-
-    const handleCloseDetail = useCallback(() => {
-        setSelectedAssetId(null);
-    }, []);
+    const sanitizedUser = {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        imageUrl: user.imageUrl,
+        email: primaryEmail,
+        phone: primaryPhone
+    };
 
     return (
-        <div className="flex h-screen flex-col bg-background lg:flex-row">
-            {/* Desktop Sidebar */}
-            <div className="hidden lg:block">
-                <Sidebar
-                    activeView={activeView}
-                    onViewChange={setActiveView}
-                    storageUsed={STORAGE_USED}
-                    storageTotal={STORAGE_TOTAL}
-                />
-            </div>
-
-            {/* Mobile Nav */}
-            <MobileNav
-                activeView={activeView}
-                onViewChange={setActiveView}
-                storageUsed={STORAGE_USED}
-                storageTotal={STORAGE_TOTAL}
-            />
-
-            {/* Main Content Area */}
-            <div className="flex flex-1 overflow-hidden">
-                {/* Primary View */}
-                <div
-                    className={cn(
-                        "flex-1 overflow-hidden",
-                        activeView === "gallery" && selectedAssetId ? "hidden md:block" : ""
-                    )}
-                >
-                    {activeView === "gallery" && (
-                        <AssetGallery
-                            assets={sampleAssets}
-                            selectedAssetId={selectedAssetId}
-                            onSelectAsset={handleSelectAsset}
-                        />
-                    )}
-                    {activeView === "copyrights" && (
-                        <CopyrightsView
-                            assets={sampleAssets}
-                            onSelectAsset={handleSelectAsset}
-                        />
-                    )}
-                    {activeView === "analytics" && <AnalyticsView />}
-                    {activeView === "settings" && <ProfileSettings user={user} />}
-                </div>
-
-                {/* Detail Panel (Gallery view only) */}
-                {activeView === "gallery" && (
-                    <div
-                        className={cn(
-                            "w-full border-l border-border transition-all duration-300 md:w-[380px] lg:w-[400px]",
-                            selectedAssetId
-                                ? "block"
-                                : "hidden md:block"
-                        )}
-                    >
-                        <AssetDetail asset={selectedAsset} onClose={handleCloseDetail} />
-                    </div>
-                )}
-            </div>
-        </div>
+        <Dashboard
+            assets={sampleAssets}
+            storageUsed={STORAGE_USED}
+            storageTotal={STORAGE_TOTAL}
+            user={sanitizedUser}
+        />
     );
 }

@@ -3,13 +3,20 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Menu, X, Hexagon } from "lucide-react";
 import { Show, useUser } from "@clerk/nextjs";
 
 export function Header() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useUser();
+
+  const hiddenRoutes = ["/profile", "/dashboard", "/admin"];
+  const isHidden = hiddenRoutes.some(route => pathname?.startsWith(route));
+
+  if (isHidden) return null;
 
   const headerItems: string[] = ["Features", "Creators", "Pricing", "Our Story", "Contact"];
 

@@ -5,20 +5,29 @@ import Image from "next/image";
 import { Camera, Eye, EyeOff, Save, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import type { UserResource } from "@clerk/nextjs/types";
+
 interface ProfileData {
   avatar: string;
-  username: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
 }
 
-export function ProfileSettings() {
+interface ProfileSettingsProps {
+  user: UserResource | null | undefined;
+}
+
+export function ProfileSettings({ user }: ProfileSettingsProps) {
   const [profile, setProfile] = useState<ProfileData>({
-    avatar: "/images/art-1.jpg",
-    username: "elena.marchetti",
-    email: "elena@creativestudio.co",
-    phone: "+1 (555) 342-8901",
+    avatar: user?.imageUrl || "/images/art-1.jpg",
+    firstName: user?.firstName ?? "",
+    lastName: user?.lastName ?? "",
+    email: user?.primaryEmailAddress?.emailAddress ?? "",
+    phone: user?.primaryPhoneNumber?.phoneNumber ?? "",
   });
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -68,7 +77,7 @@ export function ProfileSettings() {
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  {profile.username}
+                  {/* {profile.username} */}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   JPG, PNG, or GIF. Max 2MB.
@@ -86,14 +95,30 @@ export function ProfileSettings() {
               Personal Information
             </h2>
             <div className="space-y-4">
-              <FormField
-                label="Username"
-                value={profile.username}
-                onChange={(val) =>
-                  setProfile((p) => ({ ...p, username: val }))
-                }
-                placeholder="Your username"
-              />
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <FormField
+                    label="First Name"
+                    value={profile.firstName ?? ""}
+                    onChange={(val) =>
+                      setProfile((p) => ({ ...p, email: val }))
+                    }
+                    type="email"
+                    placeholder="First Name"
+                  />
+                </div>
+                <div className="flex-1">
+                  <FormField
+                    label="Last Name"
+                    value={profile.lastName ?? ""}
+                    onChange={(val) =>
+                      setProfile((p) => ({ ...p, email: val }))
+                    }
+                    type="email"
+                    placeholder="Last Name"
+                  />
+                </div>
+              </div>
               <FormField
                 label="Email Address"
                 value={profile.email}
@@ -202,7 +227,7 @@ export function ProfileSettings() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

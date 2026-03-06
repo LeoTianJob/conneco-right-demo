@@ -1,16 +1,125 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { ArrowLeft, LogOut, Save, User } from "lucide-react";
+import { Sidebar } from "@/components/profile/sidebar";
+import { MobileNav } from "@/components/profile/mobile-nav";
+import { AssetGallery, type Asset } from "@/components/profile/asset-gallery";
+import { AssetDetail } from "@/components/profile/asset-detail";
+import { CopyrightsView } from "@/components/profile/copyrights-view";
+import { AnalyticsView } from "@/components/profile/analytics-view";
+import { ProfileSettings } from "@/components/profile/profile-settings";
+import { cn } from "@/lib/utils";
 
-export default function ProfilePage() {
+const sampleAssets: Asset[] = [
+    {
+        id: "1",
+        title: "Coastal Serenity",
+        src: "/images/art-1.jpg",
+        type: "image",
+        status: "Protected",
+        creator: "Elena Marchetti",
+        timestamp: "Jan 15, 2026",
+        license: "CC BY-NC 4.0",
+        dimensions: "3840 x 2160",
+        fileSize: "8.2 MB",
+    },
+    {
+        id: "2",
+        title: "Mountain Dawn",
+        src: "/images/art-2.jpg",
+        type: "image",
+        status: "Protected",
+        creator: "Elena Marchetti",
+        timestamp: "Jan 22, 2026",
+        license: "All Rights Reserved",
+        dimensions: "4096 x 2730",
+        fileSize: "12.1 MB",
+    },
+    {
+        id: "3",
+        title: "Portrait Study #7",
+        src: "/images/art-3.jpg",
+        type: "image",
+        status: "Processing",
+        creator: "Elena Marchetti",
+        timestamp: "Feb 3, 2026",
+        license: "CC BY 4.0",
+        dimensions: "2400 x 3200",
+        fileSize: "5.6 MB",
+    },
+    {
+        id: "4",
+        title: "Neon Geometry #4",
+        src: "/images/art-4.jpg",
+        type: "image",
+        status: "Protected",
+        creator: "Elena Marchetti",
+        timestamp: "Feb 10, 2026",
+        license: "CC BY-SA 4.0",
+        dimensions: "3000 x 3000",
+        fileSize: "4.3 MB",
+    },
+    {
+        id: "5",
+        title: "Golden Hour",
+        src: "/images/art-5.jpg",
+        type: "video",
+        status: "Pending",
+        creator: "Elena Marchetti",
+        timestamp: "Feb 18, 2026",
+        license: "All Rights Reserved",
+        dimensions: "1920 x 1080",
+        fileSize: "142 MB",
+    },
+    {
+        id: "6",
+        title: "Botanical Study II",
+        src: "/images/art-6.jpg",
+        type: "image",
+        status: "Protected",
+        creator: "Elena Marchetti",
+        timestamp: "Feb 24, 2026",
+        license: "CC BY-NC 4.0",
+        dimensions: "2800 x 4200",
+        fileSize: "9.8 MB",
+    },
+    {
+        id: "7",
+        title: "Urban Rhythms",
+        src: "/images/art-7.jpg",
+        type: "image",
+        status: "Processing",
+        creator: "Elena Marchetti",
+        timestamp: "Mar 1, 2026",
+        license: "CC BY 4.0",
+        dimensions: "3600 x 2400",
+        fileSize: "7.1 MB",
+    },
+    {
+        id: "8",
+        title: "Dreamscape IV",
+        src: "/images/art-8.jpg",
+        type: "image",
+        status: "Protected",
+        creator: "Elena Marchetti",
+        timestamp: "Mar 3, 2026",
+        license: "All Rights Reserved",
+        dimensions: "4000 x 3000",
+        fileSize: "11.4 MB",
+    },
+];
+
+const STORAGE_USED = 45;
+const STORAGE_TOTAL = 100;
+
+export default function DashboardPage() {
     const { user, isLoaded } = useUser();
     const { signOut } = useClerk();
     const router = useRouter();
+    const [activeView, setActiveView] = useState("gallery");
+    const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -27,164 +136,77 @@ export default function ProfilePage() {
         }
     }, [isLoaded, user, router]);
 
-    const handleSave = async () => {
-        if (!user) return;
-        setSaving(true);
-        try {
-            await user.update({ firstName, lastName });
-            setSaved(true);
-            setTimeout(() => setSaved(false), 2500);
-        } finally {
-            setSaving(false);
-        }
-    };
+    const selectedAsset =
+        sampleAssets.find((a) => a.id === selectedAssetId) || null;
 
-    const handleSignOut = async () => {
-        await signOut();
-        router.replace("/");
-    };
+    const handleSelectAsset = useCallback((id: string) => {
+        setSelectedAssetId((prev) => (prev === id ? null : id));
+        setActiveView("gallery");
+    }, []);
 
-    if (!isLoaded || !user) {
-        return (
-            <div className="flex min-h-screen items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-foreground" />
-            </div>
-        );
-    }
-
-    const initials = [user.firstName, user.lastName]
-        .filter(Boolean)
-        .map((n) => n![0].toUpperCase())
-        .join("") || user.emailAddresses[0]?.emailAddress[0].toUpperCase() || "?";
-
-    const joinedDate = new Date(user.createdAt!).toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-    });
+    const handleCloseDetail = useCallback(() => {
+        setSelectedAssetId(null);
+    }, []);
 
     return (
-        <div className="min-h-screen bg-background py-24 px-4">
-            <div className="mx-auto max-w-2xl">
+        <div className="flex h-screen flex-col bg-background lg:flex-row">
+            {/* Desktop Sidebar */}
+            <div className="hidden lg:block">
+                <Sidebar
+                    activeView={activeView}
+                    onViewChange={setActiveView}
+                    storageUsed={STORAGE_USED}
+                    storageTotal={STORAGE_TOTAL}
+                />
+            </div>
 
-                {/* Back link */}
-                <Link
-                    href="/"
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-10"
+            {/* Mobile Nav */}
+            <MobileNav
+                activeView={activeView}
+                onViewChange={setActiveView}
+                storageUsed={STORAGE_USED}
+                storageTotal={STORAGE_TOTAL}
+            />
+
+            {/* Main Content Area */}
+            <div className="flex flex-1 overflow-hidden">
+                {/* Primary View */}
+                <div
+                    className={cn(
+                        "flex-1 overflow-hidden",
+                        activeView === "gallery" && selectedAssetId ? "hidden md:block" : ""
+                    )}
                 >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to home
-                </Link>
-
-                {/* Profile Card Header */}
-                <div className="rounded-2xl border border-border bg-card p-8 shadow-sm mb-6">
-                    <div className="flex items-center gap-5">
-                        {user.imageUrl ? (
-                            <Image
-                                src={user.imageUrl}
-                                alt="Profile"
-                                width={80}
-                                height={80}
-                                className="h-20 w-20 rounded-full object-cover border border-border"
-                            />
-                        ) : (
-                            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-2xl font-semibold text-primary-foreground">
-                                {initials}
-                            </div>
-                        )}
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                                {user.fullName || "Your Profile"}
-                            </h1>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                {user.primaryEmailAddress?.emailAddress}
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Member since {joinedDate}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Editable Info */}
-                <div className="rounded-2xl border border-border bg-card p-8 shadow-sm mb-6">
-                    <div className="mb-6 flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-                            Personal Information
-                        </h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                        <div>
-                            <label className="mb-1.5 block text-sm font-medium text-foreground">
-                                First Name
-                            </label>
-                            <input
-                                type="text"
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
-                                className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground"
-                                placeholder="First name"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-1.5 block text-sm font-medium text-foreground">
-                                Last Name
-                            </label>
-                            <input
-                                type="text"
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                                className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground"
-                                placeholder="Last name"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mt-5">
-                        <label className="mb-1.5 block text-sm font-medium text-foreground">
-                            Email Address
-                        </label>
-                        <input
-                            type="email"
-                            value={user.primaryEmailAddress?.emailAddress ?? ""}
-                            disabled
-                            className="w-full rounded-lg border border-border bg-muted px-4 py-2.5 text-sm text-muted-foreground outline-none cursor-not-allowed"
+                    {activeView === "gallery" && (
+                        <AssetGallery
+                            assets={sampleAssets}
+                            selectedAssetId={selectedAssetId}
+                            onSelectAsset={handleSelectAsset}
                         />
-                        <p className="mt-1.5 text-xs text-muted-foreground">
-                            Email cannot be changed here. Manage it through your account settings.
-                        </p>
-                    </div>
-
-                    <div className="mt-6 flex items-center gap-3">
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-80 disabled:opacity-50 cursor-pointer"
-                        >
-                            <Save className="h-4 w-4" />
-                            {saving ? "Saving…" : saved ? "Saved!" : "Save Changes"}
-                        </button>
-                    </div>
+                    )}
+                    {activeView === "copyrights" && (
+                        <CopyrightsView
+                            assets={sampleAssets}
+                            onSelectAsset={handleSelectAsset}
+                        />
+                    )}
+                    {activeView === "analytics" && <AnalyticsView />}
+                    {activeView === "settings" && <ProfileSettings user={user} />}
                 </div>
 
-                {/* Sign Out */}
-                <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-                    <h2 className="mb-1 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-                        Account
-                    </h2>
-                    <p className="mb-5 text-sm text-muted-foreground">
-                        Sign out of your Conneco Right account on this device.
-                    </p>
-                    <button
-                        onClick={handleSignOut}
-                        className="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary cursor-pointer"
+                {/* Detail Panel (Gallery view only) */}
+                {activeView === "gallery" && (
+                    <div
+                        className={cn(
+                            "w-full border-l border-border transition-all duration-300 md:w-[380px] lg:w-[400px]",
+                            selectedAssetId
+                                ? "block"
+                                : "hidden md:block"
+                        )}
                     >
-                        <LogOut className="h-4 w-4" />
-                        Sign Out
-                    </button>
-                </div>
-
+                        <AssetDetail asset={selectedAsset} onClose={handleCloseDetail} />
+                    </div>
+                )}
             </div>
         </div>
     );

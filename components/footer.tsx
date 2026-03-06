@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Hexagon } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const footerLinks = {
   Product: ["Features", "Pricing", "Changelog", "Integrations"],
@@ -9,6 +12,13 @@ const footerLinks = {
 };
 
 export function Footer() {
+  const pathname = usePathname();
+
+  const hiddenRoutes = ["/profile", "/dashboard", "/admin"];
+  const isHidden = hiddenRoutes.some(route => pathname?.startsWith(route));
+
+  if (isHidden) return null;
+
   return (
     <footer className="border-t border-border px-6 py-16">
       <div className="mx-auto max-w-6xl">

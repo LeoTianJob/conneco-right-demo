@@ -10,7 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Asset } from "./asset-gallery";
+import type { Asset } from "./types";
 
 interface CopyrightsViewProps {
   assets: Asset[];

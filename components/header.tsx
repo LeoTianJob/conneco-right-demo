@@ -3,13 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Menu, X, Hexagon } from "lucide-react";
 import { Show, useUser } from "@clerk/nextjs";
 
 export function Header() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useUser();
+
+  const hiddenRoutes = ["/profile", "/dashboard", "/admin"];
+  const isHidden = hiddenRoutes.some(route => pathname?.startsWith(route));
 
   const headerItems: string[] = ["Features", "Creators", "Pricing", "Our Story", "Contact"];
 
@@ -24,6 +29,8 @@ export function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  if (isHidden) return null;
 
   return (
     <header
@@ -133,7 +140,7 @@ export function Header() {
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full overflow-hidden border border-border flex-shrink-0">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full overflow-hidden border border-border shrink-0">
                     {user?.imageUrl ? (
                       <Image src={user.imageUrl} alt="Profile" width={28} height={28} className="h-full w-full object-cover" />
                     ) : (

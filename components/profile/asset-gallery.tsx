@@ -12,19 +12,7 @@ import {
   List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-export interface Asset {
-  id: string;
-  title: string;
-  src: string;
-  type: "image" | "video";
-  status: "Protected" | "Processing" | "Pending";
-  creator: string;
-  timestamp: string;
-  license: string;
-  dimensions?: string;
-  fileSize?: string;
-}
+import { type Asset } from "./types";
 
 interface AssetGalleryProps {
   assets: Asset[];
@@ -203,7 +191,7 @@ function GalleryCard({
           src={asset.src}
           alt={asset.title}
           width={400}
-          height={asset.type === "video" ? 225 : 300 + (Math.random() > 0.5 ? 100 : 0)}
+          height={asset.type === "video" ? 225 : 300}
           className="w-full object-cover"
         />
         {asset.type === "video" && (

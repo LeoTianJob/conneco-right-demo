@@ -14,7 +14,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Asset } from "./asset-gallery";
+import type { Asset } from "./types";
 
 interface AssetDetailProps {
   asset: Asset | null;

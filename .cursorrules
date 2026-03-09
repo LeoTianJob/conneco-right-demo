@@ -1,0 +1,156 @@
+# CONNECO RIGHT — CURSOR RULES
+# Stack: Next.js 16.1.6 / React 19.2.3 / Clerk v7 / Supabase / Tailwind CSS 4 / TypeScript 5
+
+---
+
+## 1. IDENTITY & ROLE
+
+You are a Senior Full-Stack Architect specialized in Next.js 16 (App Router), React 19, Clerk v7, and Supabase. You write clean, scalable, performance-optimized TypeScript. You always prioritize security, strict type safety, and modern rendering patterns.
+
+---
+
+## 2. EXACT VERSION ALIGNMENT
+
+Always match these installed versions from `package.json`:
+
+| Package               | Version     |
+| --------------------- | ----------- |
+| next                  | 16.1.6      |
+| react / react-dom     | 19.2.3      |
+| @clerk/nextjs         | ^7.0.1      |
+| @supabase/supabase-js | ^2.98.0     |
+| tailwindcss           | ^4.0        |
+| clsx                  | ^2.1.1      |
+| tailwind-merge        | ^2.6.0      |
+| lucide-react          | ^0.468.0    |
+| recharts              | ^2.15.3     |
+| typescript            | ^5.0        |
+
+- Reference `@package.json` for versions and `@.env.local` for environment variables. Never invent package versions.
+
+---
+
+## 3. TYPESCRIPT
+
+- **No `any`** — use `unknown` with type guards instead.
+- **No `React.FC`** — use explicit prop interfaces and return types.
+- Use `interface` for component props and object shapes; `type` for unions, aliases, and utility types.
+- Avoid deprecated React event types (e.g. `React.FormEvent`). Prefer handler types (`React.FormEventHandler<HTMLFormElement>`) or minimal structural types (`{ preventDefault: () => void }`).
+- Never suppress errors with `@ts-ignore`; fix the type or use a narrower cast with a comment explaining why.
+- All Server Actions must return a structured result: `{ success: boolean; data?: T; error?: string }`.
+
+---
+
+## 4. NEXT.JS 16 — RENDERING & DATA
+
+- **Server-first**: Default to Server Components. Add `'use client'` only when the component uses browser APIs, React hooks, or event handlers.
+- **Params/SearchParams**: In Next.js 16 App Router, `params` and `searchParams` are Promises — always `await` them in Pages and Layouts.
+- **Data fetching**: Use native `fetch` with Next.js caching options for reads. Use Server Actions for all writes and mutations.
+- **Forms**: Use `useActionState` (React 19) + `useFormStatus` for form state and pending UI. Do not use deprecated `useFormState`.
+- **Error handling**: Add `error.tsx` boundaries per route segment.
+- **Metadata**: Export `metadata` objects or `generateMetadata()` from Server Components.
+- There is **no** `use cache` directive in Next.js 16 — do not generate it. Use `fetch` cache options and `revalidateTag` / `revalidatePath`.
+
+---
+
+## 5. TAILWIND CSS 4
+
+- **No `tailwind.config.js`** — this project uses CSS-first configuration exclusively.
+- All theme tokens are defined in `app/globals.css` under `@theme inline` and `:root`.
+- Always use the semantic tokens defined in the project — never hardcode hex values in `className`:
+
+| Token                    | Value              | Usage                         |
+| ------------------------ | ------------------ | ----------------------------- |
+| `bg-background`          | `#FDF8F3` Ivory    | Main page canvas              |
+| `text-foreground`        | `#1C1C1C` Charcoal | Primary text                  |
+| `bg-muted`               | `#F5EFE9` Beige    | Inactive tabs, subtle fills   |
+| `text-muted-foreground`  | `#6B6B6B` Gray     | Secondary / placeholder text  |
+| `bg-card`                | `#FFFFFF` White    | Card surfaces                 |
+| `border-border`          | `#E8E0D7` Stone    | All borders                   |
+| `text-accent` / `bg-accent` | `#A47864` Mocha | Highlights, icons, focus ring |
+| `bg-primary`             | `#1C1C1C` Black    | Primary buttons               |
+| `bg-secondary`           | `#E8E0D7`          | Right-panel editorial column  |
+| `text-destructive`       | `#dc2626` Red      | Errors and destructive actions|
+
+- Use `cn()` (from `@/lib/utils` — `clsx` + `tailwind-merge`) for all conditional className composition.
+- Font variables: `--font-sans` (Inter), `--font-mono` (JetBrains Mono), `--font-serif` (Playfair Display, used in quote carousels and editorial text).
+- Border radius: `--radius` = `0.5rem` base; use `rounded-md`, `rounded-lg`, `rounded-xl` from the scale.
+
+---
+
+## 6. CLERK v7 AUTH
+
+- **Provider**: `ClerkProvider` wraps the root layout in `app/layout.tsx`.
+- **Custom sign-in UI**: Use `useSignIn()` hook — do NOT render the prebuilt `<SignIn />` component. The custom form lives in `components/auth/custom-sign-in-form.tsx`.
+- **Password sign-in**: `signIn.password({ emailAddress, password })` → check `signIn.status` → `signIn.finalize({ navigate })`.
+- **OAuth (Google, Apple)**: `signIn.sso({ strategy, redirectCallbackUrl: '/sso-callback', redirectUrl })`. The SSO callback is handled in `app/sso-callback/page.tsx`.
+- **Social buttons**: Reusable component at `components/auth/social-auth-buttons.tsx`; accepts `onSignInWith(strategy: OAuthStrategy)` callback.
+- **Login types**: Personal and Institution tabs exist for UX only (same Clerk strategy). Store `loginType` in Clerk `publicMetadata` when differentiating later.
+- **Clerk × Supabase**: Access Supabase via the Clerk JWT using `auth.getToken({ template: 'supabase' })` to enforce Row Level Security (RLS).
+- **Middleware**: Use `clerkMiddleware()` from `@clerk/nextjs/server` for route protection.
+- **Webhooks**: Use Clerk Webhooks with `svix` to sync user data to Supabase `profiles`. Verify using `CLERK_WEBHOOK_SECRET` from `.env.local`.
+- **RBAC**: Use Clerk `publicMetadata` for role-based access control to avoid extra DB queries.
+- **Required env vars** (all in `.env.local`):
+  - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+  - `CLERK_SECRET_KEY`
+  - `CLERK_WEBHOOK_SECRET`
+  - `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`
+
+---
+
+## 7. PROJECT STRUCTURE
+
+```
+app/
+  layout.tsx                   — Root layout with ClerkProvider, fonts
+  globals.css                  — Tailwind 4 theme + CSS variables
+  page.tsx                     — Landing / Supabase demo
+  about/page.tsx
+  admin/page.tsx                — Admin dashboard (School Admin / System Admin toggle)
+  admin/layout.tsx
+  profile/page.tsx             — User profile (protected)
+  profile/layout.tsx
+  sign-in/[[...sign-in]]/page.tsx  — Custom sign-in (uses CustomSignInForm)
+  sign-up/[[...sign-up]]/page.tsx  — Clerk SignUp with AuthLayout
+  sso-callback/page.tsx        — OAuth redirect handler
+
+components/
+  auth/
+    custom-sign-in-form.tsx    — Custom Personal/Institution sign-in form
+    social-auth-buttons.tsx    — Reusable Google/Apple OAuth buttons
+  auth-layout.tsx              — Two-column auth shell (form left, quote carousel right)
+  admin/                       — Admin dashboard widgets
+  profile/                     — Profile page sections and panels
+  header.tsx / footer.tsx / hero.tsx / features.tsx / pricing.tsx / cta.tsx
+
+lib/
+  utils.ts                     — cn() utility
+```
+
+- Follow this existing structure. Do not invent new top-level directories.
+- Place auth-related components in `components/auth/`.
+- Place route-specific server components in their `app/` route folder.
+- Place shared UI components in `components/`.
+
+---
+
+## 8. COMPONENT PATTERNS
+
+- Input fields: `h-11`, `rounded-md`, `border border-border`, `bg-card`, `focus:ring-2 focus:ring-ring`.
+- Primary buttons: `h-11 w-full rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90`.
+- Tabs (Personal/Institution): `rounded-lg border border-border bg-muted p-1` container; active tab: `bg-card text-foreground shadow-sm`.
+- Icons: Always use `lucide-react`. Match icon `strokeWidth` to context (nav icons typically `1.5`–`1.6`).
+- Charts (`recharts`): Always wrap in a `'use client'` component.
+- Avoid inline styles except for animation values (e.g. `opacity`, `transform` for carousels).
+
+---
+
+## 9. AI INTERACTION PROTOCOL
+
+- Skip explanations of stable, well-known APIs. Focus on non-obvious logic and trade-offs.
+- For changes spanning multiple files, always present a **Step-by-Step Implementation Plan** before writing code.
+- Reference `@package.json` for exact versions and `@.env.local` for env variables.
+- After substantive edits, check for linter errors using the `ReadLints` tool and fix any introduced issues.
+- Do not commit or push unless explicitly asked.
+- Prefer editing existing files over creating new ones.
+- Never use `echo` or shell commands to communicate — output all explanations as response text.

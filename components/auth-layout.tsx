@@ -81,8 +81,6 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
-    const [tab, setTab] = useState<"personal" | "institution">("personal");
-
     return (
         <div className="flex min-h-screen">
             {/* ── Left: Auth Form (40%) ── */}
@@ -101,25 +99,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                         {subtitle}
                     </p>
 
-                    {/* Tabs */}
-                    <div className="mb-6 mt-6 flex rounded-lg border border-border bg-muted p-1">
-                        {(["personal", "institution"] as const).map((t) => (
-                            <button
-                                key={t}
-                                onClick={() => setTab(t)}
-                                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${tab === t
-                                    ? "bg-card text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                            >
-                                {t === "personal" ? "Personal" : "Institution (School)"}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Clerk Component Injection */}
                     {children}
-
                 </div>
 
                 {/* Footer */}

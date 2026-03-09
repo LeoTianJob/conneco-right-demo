@@ -109,108 +109,111 @@ export function CustomSignInForm() {
 
   return (
     <div className="mt-6 w-full">
-      {/* Tabs */}
-      <div className="flex rounded-lg border border-border bg-muted p-1">
-        {(["personal", "institution"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setLoginType(t)}
-            className={cn(
-              "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              loginType === t
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t === "personal" ? "Personal" : "Institution (School)"}
-          </button>
-        ))}
-      </div>
+        {/* Tabs */}
+        <div className="flex rounded-lg border border-border bg-muted p-1">
+          {(["personal", "institution"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setLoginType(t)}
+              className={cn(
+                "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                loginType === t
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t === "personal" ? "Personal" : "Institution (School)"}
+            </button>
+          ))}
+        </div>
 
-      {/* Form */}
-      <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-        {/* Clerk errors */}
-        {errors && (
-          <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {errors.fields?.identifier?.message ??
-              errors.fields?.password?.message ??
-              (errors as { message?: string }).message ??
-              "Something went wrong. Please try again."}
+        {/* Form */}
+        <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
+          {/* Clerk errors */}
+          {errors && (
+            <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errors.fields?.identifier?.message ??
+                errors.fields?.password?.message ??
+                (errors as { message?: string }).message ??
+                "Something went wrong. Please try again."}
+            </div>
+          )}
+
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="email"
+              name="email"
+              autoComplete="email"
+              placeholder={
+                loginType === "institution" ? "School email address" : "Email address"
+              }
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="h-11 w-full rounded-md border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
-        )}
 
-        <div className="relative">
-          <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="email"
-            name="email"
-            autoComplete="email"
-            placeholder={
-              loginType === "institution" ? "School email address" : "Email address"
-            }
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="h-11 w-full rounded-md border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              autoComplete="current-password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="h-11 w-full rounded-md border border-border bg-card pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
 
-        <div className="relative">
-          <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            autoComplete="current-password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="h-11 w-full rounded-md border border-border bg-card pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+          <div className="flex items-center justify-end">
+            <Link
+              href="#"
+              className="text-xs font-medium text-accent hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            aria-label={showPassword ? "Hide password" : "Show password"}
+            type="submit"
+            disabled={isFetching}
+            className="h-11 w-full rounded-md border border-primary bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
-            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            {isFetching ? "Signing in…" : "Sign In"}
           </button>
-        </div>
+        </form>
+      {/* Social login and sign up — only for Personal */}
+      {loginType === "personal" && (
+        <>
+          <div className="my-6 flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or continue with</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
 
-        <div className="flex items-center justify-end">
-          <Link
-            href="#"
-            className="text-xs font-medium text-accent hover:underline"
-          >
-            Forgot password?
-          </Link>
-        </div>
+          <SocialAuthButtons onSignInWith={handleSignInWith} disabled={isFetching} />
 
-        <button
-          type="submit"
-          disabled={isFetching}
-          className="h-11 w-full rounded-md border border-primary bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-        >
-          {isFetching ? "Signing in…" : "Sign In"}
-        </button>
-      </form>
-
-      {/* Divider */}
-      <div className="my-6 flex items-center gap-3">
-        <span className="h-px flex-1 bg-border" />
-        <span className="text-xs text-muted-foreground">or continue with</span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
-      <SocialAuthButtons onSignInWith={handleSignInWith} disabled={isFetching} />
-
-      <p className="mt-6 text-center text-xs text-muted-foreground">
-        {"Don't have an account? "}
-        <Link href="/sign-up" className="font-medium text-foreground hover:underline">
-          Sign up
-        </Link>
-      </p>
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            {"Don't have an account? "}
+            <Link href="/sign-up" className="font-medium text-foreground hover:underline">
+              Sign up
+            </Link>
+          </p>
+        </>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Camera, Save, Loader2, LogOut } from "lucide-react";
+import { Camera, Save, Loader2, LogOut, Eye, EyeOff } from "lucide-react";
 import { useClerk, useReverification, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { type UserProfile } from "./types";
@@ -173,6 +173,11 @@ export function Settings({ user: initialUser }: ProfileSettingsProps) {
   const [newEmail, setNewEmail] = useState<EmailAddressResource | undefined>();
   const [verificationState, setVerificationState] = useState<VerificationState | undefined>();
 
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -307,6 +312,43 @@ export function Settings({ user: initialUser }: ProfileSettingsProps) {
             </div>
           </Section>
 
+          <Section title="Change Password">
+            <div className="space-y-4">
+              <div className="relative">
+                <FormField
+                  label="New Password"
+                  value={password}
+                  onChange={setPassword}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-[38px] text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="relative">
+                <FormField
+                  label="Confirm Password"
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Confirm new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-[38px] text-muted-foreground hover:text-foreground"
+                >
+                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          </Section>
+
           {isVerifying && (
             <EmailVerificationForm
               email={profile.email}
@@ -339,13 +381,17 @@ export function Settings({ user: initialUser }: ProfileSettingsProps) {
 
           <ActionButtons
             onSave={handleSave}
-            onCancel={() => setProfile({
-              imageUrl: initialUser?.imageUrl || "/images/art-1.jpg",
-              firstName: initialUser?.firstName ?? "",
-              lastName: initialUser?.lastName ?? "",
-              email: initialUser?.email ?? "",
-              phone: initialUser?.phone ?? "",
-            })}
+            onCancel={() => {
+              setProfile({
+                imageUrl: initialUser?.imageUrl || "/images/art-1.jpg",
+                firstName: initialUser?.firstName ?? "",
+                lastName: initialUser?.lastName ?? "",
+                email: initialUser?.email ?? "",
+                phone: initialUser?.phone ?? "",
+              });
+              setPassword("");
+              setConfirmPassword("");
+            }}
             saving={saving}
             saved={saved}
           />

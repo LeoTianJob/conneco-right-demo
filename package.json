@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:local": "dotenv -e .env.local -- next dev",
+    "tunnel": "ngrok http 3000",
     "dev:dev": "dotenv -e .env.dev -- next dev",
     "dev:prod": "dotenv -e .env.production -- next dev",
     "build": "next build",
@@ -21,6 +22,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^2.15.3",
+    "svix": "^1.40.0",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, Hexagon } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { Show, useUser } from "@clerk/nextjs";
 
 export function Header() {
@@ -40,12 +41,7 @@ export function Header() {
         }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Hexagon className="h-7 w-7 text-primary" strokeWidth={1.5} />
-          <span className="text-lg font-semibold tracking-tight text-foreground">
-            Conneco Right
-          </span>
-        </Link>
+        <Logo height={28} showText className="text-lg font-semibold [&>span]:text-lg" />
 
         <nav className="hidden items-center gap-8 md:flex">
           {headerItems.map((item) => {

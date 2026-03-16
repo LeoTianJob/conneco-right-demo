@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { Logo } from "@/components/logo";
 
 const quotes = [
     {
@@ -86,9 +86,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             {/* ── Left: Auth Form (40%) ── */}
             <div className="flex w-full flex-col justify-between bg-background px-8 py-10 md:w-[40%] md:px-12">
                 {/* Logo */}
-                <Link href="/" className="text-lg font-semibold tracking-tight text-foreground">
-                    Conneco<span className="text-accent">Right</span>
-                </Link>
+                <Logo height={28} showText className="text-lg [&>span]:text-lg" />
 
                 {/* Form Container */}
                 <div className="mx-auto flex w-full max-w-sm flex-col justify-center py-10">

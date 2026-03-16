@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Hexagon,
   LayoutDashboard,
   ShieldCheck,
   Bell,
   ChevronDown,
   Search,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { StatsCards } from "@/components/admin/stats-cards";
 import { StudentActivityChart } from "@/components/admin/student-activity-chart";
@@ -28,12 +28,7 @@ export default function AdminDashboard() {
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6">
           {/* Left: Logo & Title */}
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2.5">
-              <Hexagon className="h-7 w-7 text-accent" strokeWidth={1.5} />
-              <span className="hidden text-base font-semibold tracking-tight text-foreground sm:inline">
-                Conneco Right
-              </span>
-            </Link>
+            <Logo height={28} showText className="[&>span]:hidden [&>span]:sm:inline" />
             <div className="mx-3 hidden h-6 w-px bg-border sm:block" />
             <div className="hidden items-center gap-1.5 sm:flex">
               <LayoutDashboard className="h-4 w-4 text-muted-foreground" strokeWidth={1.6} />

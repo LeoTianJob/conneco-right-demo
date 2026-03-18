@@ -37,7 +37,8 @@ function AppleIcon() {
 export type OAuthStrategy = "oauth_google" | "oauth_apple";
 
 export interface SocialAuthButtonsProps {
-  onSignInWith: (strategy: OAuthStrategy) => void;
+  onSignInWith?: (strategy: OAuthStrategy) => void;
+  onSignUpWith?: (strategy: OAuthStrategy) => void;
   disabled?: boolean;
   className?: string;
 }
@@ -47,14 +48,20 @@ const providers: { strategy: OAuthStrategy; label: string; Icon: () => ReactNode
   { strategy: "oauth_apple", label: "Apple", Icon: AppleIcon },
 ];
 
-export function SocialAuthButtons({ onSignInWith, disabled, className }: SocialAuthButtonsProps) {
+export function SocialAuthButtons({
+  onSignInWith,
+  onSignUpWith,
+  disabled,
+  className,
+}: SocialAuthButtonsProps) {
+  const handleAuthWith = onSignUpWith ?? onSignInWith;
   return (
     <div className={cn("flex gap-3", className)}>
       {providers.map(({ strategy, label, Icon }) => (
         <button
           key={strategy}
           type="button"
-          onClick={() => onSignInWith(strategy)}
+          onClick={() => handleAuthWith?.(strategy)}
           disabled={disabled}
           className="flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-border bg-card text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
         >

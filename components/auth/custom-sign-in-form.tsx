@@ -15,7 +15,7 @@ const SSO_CALLBACK_URL = "/sso-callback";
 export function CustomSignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect_url") ?? "/";
+  const redirectUrl = searchParams.get("redirect_url") ?? "/profile";
 
   const { signIn, errors, fetchStatus } = useSignIn();
 

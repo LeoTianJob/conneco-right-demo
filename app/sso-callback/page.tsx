@@ -22,7 +22,7 @@ export default function SSOCallbackPage() {
         await signIn.finalize({
           navigate: async ({ session, decorateUrl }) => {
             if (session?.currentTask) return;
-            const url = decorateUrl("/");
+            const url = decorateUrl("/profile");
             if (url.startsWith("http")) {
               window.location.href = url;
             } else {
@@ -40,7 +40,7 @@ export default function SSOCallbackPage() {
           await signIn.finalize({
             navigate: async ({ session, decorateUrl }) => {
               if (session?.currentTask) return;
-              const url = decorateUrl("/");
+              const url = decorateUrl("/profile");
               if (url.startsWith("http")) window.location.href = url;
               else router.push(url);
             },
@@ -65,7 +65,7 @@ export default function SSOCallbackPage() {
           await signUp.finalize({
             navigate: async ({ session, decorateUrl }) => {
               if (session?.currentTask) return;
-              const url = decorateUrl("/");
+              const url = decorateUrl("/profile");
               if (url.startsWith("http")) window.location.href = url;
               else router.push(url);
             },
@@ -80,7 +80,7 @@ export default function SSOCallbackPage() {
         await signUp.finalize({
           navigate: async ({ session, decorateUrl }) => {
             if (session?.currentTask) return;
-            const url = decorateUrl("/");
+            const url = decorateUrl("/profile");
             if (url.startsWith("http")) window.location.href = url;
             else router.push(url);
           },
@@ -99,7 +99,7 @@ export default function SSOCallbackPage() {
           session: existingSession.sessionId,
           navigate: async ({ session, decorateUrl }) => {
             if (session?.currentTask) return;
-            const url = decorateUrl("/");
+            const url = decorateUrl("/profile");
             if (url.startsWith("http")) window.location.href = url;
             else router.push(url);
           },

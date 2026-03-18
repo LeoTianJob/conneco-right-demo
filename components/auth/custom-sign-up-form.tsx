@@ -31,7 +31,7 @@ function getErrorMessage(
 export function CustomSignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect_url") ?? "/";
+  const redirectUrl = searchParams.get("redirect_url") ?? "/profile";
 
   const { signUp, errors, fetchStatus } = useSignUp();
 

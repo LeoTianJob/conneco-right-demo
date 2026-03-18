@@ -7,11 +7,11 @@ import {
   Shield,
   BarChart3,
   Settings,
-  Hexagon,
   ChevronLeft,
   ChevronRight,
   HardDrive,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -45,15 +45,8 @@ export function Sidebar({
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 border-b border-border px-5 py-5">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Hexagon className="h-7 w-7 shrink-0 text-accent" strokeWidth={1.5} />
-          {!collapsed && (
-            <span className="text-base font-semibold tracking-tight text-foreground">
-              Conneco Right
-            </span>
-          )}
-        </Link>
+      <div className="flex items-center border-b border-border px-5 py-5">
+        <Logo height={28} showText={!collapsed} />
       </div>
 
       {/* Navigation */}

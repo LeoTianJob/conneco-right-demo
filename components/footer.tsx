@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Hexagon } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { usePathname } from "next/navigation";
 
 const footerLinks = {
@@ -25,12 +25,7 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-5">
           {/* Brand column */}
           <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <Hexagon className="h-6 w-6 text-primary" strokeWidth={1.5} />
-              <span className="text-base font-semibold text-foreground">
-                Conneco Right
-              </span>
-            </Link>
+            <Logo height={24} showText />
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               The creative asset management platform built for artists and
               institutions.

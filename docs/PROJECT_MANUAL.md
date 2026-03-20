@@ -104,7 +104,7 @@ conneco-right-demo/
 │   │   └── page.tsx              # Custom sign-in (CustomSignInForm)
 │   ├── sign-up/[[...sign-up]]/
 │   │   └── page.tsx              # Clerk SignUp with AuthLayout
-│   ├── sso-callback/page.tsx     # OAuth redirect handler after Google/Apple sign-in
+│   ├── sso-callback/page.tsx     # OAuth redirect handler after Google/Facebook sign-in
 │   └── api/
 │       └── webhooks/
 │           └── clerk/
@@ -112,7 +112,7 @@ conneco-right-demo/
 ├── components/
 │   ├── auth/
 │   │   ├── custom-sign-in-form.tsx   # Personal/Institution tabs, password + OAuth (useSignIn)
-│   │   └── social-auth-buttons.tsx   # Google/Apple OAuth buttons
+│   │   └── social-auth-buttons.tsx   # Google/Facebook OAuth buttons
 │   ├── auth-layout.tsx           # Two-column auth shell (form left, quote carousel right)
 │   ├── admin/                    # Admin dashboard widgets (e.g. stats, charts, tables)
 │   ├── profile/                  # Profile sections, sidebar, settings, asset gallery, etc.

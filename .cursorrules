@@ -83,7 +83,7 @@ Always match these installed versions from `package.json`:
 - **Provider**: `ClerkProvider` wraps the root layout in `app/layout.tsx`.
 - **Custom sign-in UI**: Use `useSignIn()` hook — do NOT render the prebuilt `<SignIn />` component. The custom form lives in `components/auth/custom-sign-in-form.tsx`.
 - **Password sign-in**: `signIn.password({ emailAddress, password })` → check `signIn.status` → `signIn.finalize({ navigate })`.
-- **OAuth (Google, Apple)**: `signIn.sso({ strategy, redirectCallbackUrl: '/sso-callback', redirectUrl })`. The SSO callback is handled in `app/sso-callback/page.tsx`.
+- **OAuth (Google, Facebook)**: `signIn.sso({ strategy, redirectCallbackUrl: '/sso-callback', redirectUrl })`. The SSO callback is handled in `app/sso-callback/page.tsx`.
 - **Social buttons**: Reusable component at `components/auth/social-auth-buttons.tsx`; accepts `onSignInWith(strategy: OAuthStrategy)` callback.
 - **Login types**: Personal and Institution tabs exist for UX only (same Clerk strategy). Store `loginType` in Clerk `publicMetadata` when differentiating later.
 - **Clerk × Supabase**: Access Supabase via the Clerk JWT using `auth.getToken({ template: 'supabase' })` to enforce Row Level Security (RLS).
@@ -117,7 +117,7 @@ app/
 components/
   auth/
     custom-sign-in-form.tsx    — Custom Personal/Institution sign-in form
-    social-auth-buttons.tsx    — Reusable Google/Apple OAuth buttons
+    social-auth-buttons.tsx    — Reusable Google/Facebook OAuth buttons
   auth-layout.tsx              — Two-column auth shell (form left, quote carousel right)
   admin/                       — Admin dashboard widgets
   profile/                     — Profile page sections and panels

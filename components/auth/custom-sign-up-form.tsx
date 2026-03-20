@@ -273,6 +273,9 @@ export function CustomSignUpForm() {
           <p className="text-xs text-destructive">Passwords do not match.</p>
         )}
 
+        {/* Clerk's CAPTCHA widget */}
+        <div id="clerk-captcha" />
+        
         <button
           type="submit"
           disabled={isFetching || (!!password && !!confirmPassword && password !== confirmPassword)}

@@ -14,7 +14,7 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useUser();
 
-  const hiddenRoutes = ["/profile", "/dashboard", "/admin"];
+  const hiddenRoutes = ["/profile", "/admin", "/sign-in", "/sign-up"];
   const isHidden = hiddenRoutes.some(route => pathname?.startsWith(route));
 
   const headerItems: string[] = ["Features", "Creators", "Pricing", "Our Story", "Contact"];

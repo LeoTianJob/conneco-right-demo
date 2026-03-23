@@ -41,6 +41,27 @@ interface ClerkWebhookPayload {
 
 // ── Helpers ──
 
+/**
+ * @description Validates whether an unknown payload matches the minimum Clerk webhook payload shape.
+ * @param value Unknown value returned by Svix verification.
+ * @returns True when payload contains `type` string and `data.id` string.
+ * @throws Never throws.
+ */
+function isClerkWebhookPayload(value: unknown): value is ClerkWebhookPayload {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const payload = value as { type?: unknown; data?: { id?: unknown } }
+  return typeof payload.type === 'string' && typeof payload.data?.id === 'string'
+}
+
+/**
+ * @description Returns a primary email from Clerk data, prioritizing explicit primary email id.
+ * @param data Clerk webhook data object.
+ * @returns Resolved primary email or empty string if unavailable.
+ * @throws Never throws.
+ */
 function getPrimaryEmail(data: ClerkWebhookData): string {
   const list = data.email_addresses ?? []
   const primaryId = data.primary_email_address_id
@@ -51,6 +72,12 @@ function getPrimaryEmail(data: ClerkWebhookData): string {
   return list[0]?.email_address ?? ''
 }
 
+/**
+ * @description Resolves `user_type` from Clerk public metadata with safe fallback.
+ * @param data Clerk webhook data object.
+ * @returns Metadata user type when present, otherwise `individual`.
+ * @throws Never throws.
+ */
 function getUserType(data: ClerkWebhookData): string {
   const meta = data.public_metadata
   if (
@@ -65,7 +92,13 @@ function getUserType(data: ClerkWebhookData): string {
 
 // ── Route handler ──
 
-export async function POST(request: NextRequest) {
+/**
+ * @description Handles Clerk webhook events and synchronizes profile/identity records to Supabase.
+ * @param request Next.js request carrying Svix signed webhook payload.
+ * @returns JSON response acknowledging webhook receipt with resilient status handling.
+ * @throws Never throws to caller; all runtime errors are handled and logged internally.
+ */
+export async function POST(request: NextRequest): Promise<Response> {
   if (!CLERK_WEBHOOK_SECRET || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.error('[webhooks/clerk] Missing env vars: CLERK_WEBHOOK_SECRET, NEXT_PUBLIC_SUPABASE_URL, or SUPABASE_SERVICE_ROLE_KEY')
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
@@ -92,11 +125,15 @@ export async function POST(request: NextRequest) {
   let evt: ClerkWebhookPayload
 
   try {
-    evt = wh.verify(body, {
+    const verified = wh.verify(body, {
       'svix-id': svixId,
       'svix-timestamp': svixTimestamp,
       'svix-signature': svixSignature,
-    }) as ClerkWebhookPayload
+    })
+    if (!isClerkWebhookPayload(verified)) {
+      return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 })
+    }
+    evt = verified
   } catch (err) {
     console.error('[webhooks/clerk] Signature verification failed:', err)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })

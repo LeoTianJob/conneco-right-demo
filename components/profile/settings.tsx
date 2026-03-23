@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import Image from "next/image";
 import { Camera, Save, Loader2, LogOut, Eye, EyeOff } from "lucide-react";
 import { useClerk, useReverification, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import { getErrorMessageFromUnknown } from "@/lib/auth-client-utils";
 import { type UserProfile } from "./types";
 import { EmailAddressResource, SessionVerificationLevel } from "@clerk/nextjs/types";
 import { EmailVerificationForm } from "./email-verification-form";
@@ -30,9 +31,44 @@ interface ProfileSettingsProps {
   user: UserProfile | null | undefined;
 }
 
+interface SettingsHeaderProps {
+  onSignOut: () => void;
+}
+
+interface SectionProps {
+  title: string;
+  children: ReactNode;
+}
+
+interface AvatarSectionProps {
+  profile: ProfileData;
+}
+
+interface FormFieldProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  type?: string;
+  placeholder?: string;
+  disabled?: boolean;
+}
+
+interface ActionButtonsProps {
+  onSave: () => void;
+  onCancel: () => void;
+  saving: boolean;
+  saved: boolean;
+}
+
 // --- Sub-components ---
 
-function SettingsHeader({ onSignOut }: { onSignOut: () => void }) {
+/**
+ * @description Renders the settings page top header with sign-out action.
+ * @param onSignOut Callback to sign the current user out.
+ * @returns Header UI for settings page.
+ * @throws Never throws.
+ */
+function SettingsHeader({ onSignOut }: SettingsHeaderProps): JSX.Element {
   return (
     <div className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
       <div>
@@ -52,7 +88,14 @@ function SettingsHeader({ onSignOut }: { onSignOut: () => void }) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * @description Renders a reusable card section wrapper for grouped settings controls.
+ * @param title Section title text.
+ * @param children Inner section content.
+ * @returns Card-like section UI.
+ * @throws Never throws.
+ */
+function Section({ title, children }: SectionProps): JSX.Element {
   return (
     <div className="rounded-xl border border-border bg-card p-6">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
@@ -63,7 +106,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function AvatarSection({ profile }: { profile: ProfileData }) {
+/**
+ * @description Displays current user avatar and related upload affordance.
+ * @param profile Profile view model containing image and name fields.
+ * @returns Avatar section UI.
+ * @throws Never throws.
+ */
+function AvatarSection({ profile }: AvatarSectionProps): JSX.Element {
   return (
     <Section title="Avatar">
       <div className="flex items-center gap-5">
@@ -85,6 +134,17 @@ function AvatarSection({ profile }: { profile: ProfileData }) {
   );
 }
 
+/**
+ * @description Renders a reusable labeled input for profile settings forms.
+ * @param label Text label rendered above input.
+ * @param value Controlled input value.
+ * @param onChange Callback invoked with updated field value.
+ * @param type Input type attribute.
+ * @param placeholder Optional placeholder text.
+ * @param disabled Whether input is disabled.
+ * @returns A labeled input field component.
+ * @throws Never throws.
+ */
 function FormField({
   label,
   value,
@@ -92,14 +152,7 @@ function FormField({
   type = "text",
   placeholder,
   disabled = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-  type?: string;
-  placeholder?: string;
-  disabled?: boolean;
-}) {
+}: FormFieldProps): JSX.Element {
   return (
     <div>
       <label className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
@@ -118,17 +171,21 @@ function FormField({
   );
 }
 
+/**
+ * @description Renders save/cancel controls and visual save state feedback.
+ * @param onSave Callback triggered when save button is pressed.
+ * @param onCancel Callback triggered when cancel button is pressed.
+ * @param saving Indicates save operation in progress.
+ * @param saved Indicates recent successful save state.
+ * @returns Footer action button group for settings form.
+ * @throws Never throws.
+ */
 function ActionButtons({
   onSave,
   onCancel,
   saving,
   saved,
-}: {
-  onSave: () => void;
-  onCancel: () => void;
-  saving: boolean;
-  saved: boolean;
-}) {
+}: ActionButtonsProps): JSX.Element {
   return (
     <div className="flex items-center justify-end gap-3 pb-6">
       <button
@@ -155,7 +212,13 @@ function ActionButtons({
 
 // --- Main Component ---
 
-export function Settings({ user: initialUser }: ProfileSettingsProps) {
+/**
+ * @description Renders and manages profile settings state including name and email verification flows.
+ * @param initialUser Initial profile snapshot used to seed editable state.
+ * @returns Profile settings page body.
+ * @throws May surface Clerk errors during account update and email verification operations.
+ */
+export function Settings({ user: initialUser }: ProfileSettingsProps): JSX.Element {
   const { user } = useUser();
   const { signOut } = useClerk();
 
@@ -218,9 +281,9 @@ export function Settings({ user: initialUser }: ProfileSettingsProps) {
         } else {
           setStatusMessage("No changes detected.");
         }
-      } catch (err: any) {
-        console.error("Update error:", err);
-        setError(err.errors?.[0]?.message || "An unexpected error occurred.");
+      } catch (error: unknown) {
+        console.error("Update error:", error);
+        setError(getErrorMessageFromUnknown(error));
       } finally {
         setSaving(false);
       }
@@ -234,7 +297,13 @@ export function Settings({ user: initialUser }: ProfileSettingsProps) {
     }
   );
 
-  const handleVerifyEmail = async (code: string) => {
+  /**
+   * @description Verifies user-provided email code and promotes verified email to primary address.
+   * @param code Email verification code provided by user.
+   * @returns Promise that resolves when verification completes.
+   * @throws Can throw Clerk verification/update errors on failed verification.
+   */
+  const handleVerifyEmail = async (code: string): Promise<void> => {
     if (!newEmail || !user) return;
     setIsVerifyingLoading(true);
     setError(null);
@@ -253,23 +322,35 @@ export function Settings({ user: initialUser }: ProfileSettingsProps) {
         setError("Verification failed.");
         setIsVerifyingLoading(false);
       }
-    } catch (err: any) {
-      setError(err.errors?.[0]?.message || "Invalid code.");
+    } catch (error: unknown) {
+      setError(getErrorMessageFromUnknown(error));
       setIsVerifyingLoading(false);
     }
   };
 
-  const handleResendCode = async () => {
+  /**
+   * @description Resends verification code to the pending new email address.
+   * @param None
+   * @returns Promise that resolves when resend attempt completes.
+   * @throws Can throw Clerk errors during verification preparation.
+   */
+  const handleResendCode = async (): Promise<void> => {
     if (!newEmail) return;
     try {
       await newEmail.prepareVerification({ strategy: "email_code" });
       setStatusMessage("Verification code resent.");
-    } catch {
-      setError("Failed to resend code.");
+    } catch (error: unknown) {
+      setError(getErrorMessageFromUnknown(error));
     }
   };
 
-  const handleCancelVerification = () => {
+  /**
+   * @description Cancels active email verification and restores email field to initial value.
+   * @param None
+   * @returns Void.
+   * @throws Never throws.
+   */
+  const handleCancelVerification = (): void => {
     setIsVerifying(false);
     setError(null);
     setProfile((p) => ({ ...p, email: initialUser?.email ?? "" }));

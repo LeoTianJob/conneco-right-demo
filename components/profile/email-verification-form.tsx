@@ -86,7 +86,7 @@ export function EmailVerificationForm({
             await onResend();
             setResendCooldown(60);
             setError(null);
-        } catch (err) {
+        } catch {
             setError("Failed to resend code. Please try again.");
         } finally {
             setResending(false);
@@ -117,7 +117,7 @@ export function EmailVerificationForm({
                     <div>
                         <h3 className="text-lg font-semibold text-foreground">Verify your email</h3>
                         <p className="text-sm text-muted-foreground">
-                            We've sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>
+                            We&apos;ve sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>
                         </p>
                     </div>
                 </div>

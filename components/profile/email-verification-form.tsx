@@ -5,7 +5,10 @@ import { Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EmailVerificationFormProps {
+    /** Display value (email address or phone) where the code was sent. */
     email: string;
+    /** Use SMS copy when verifying a phone number. */
+    verificationChannel?: "email" | "phone";
     onVerify: (code: string) => Promise<void>;
     onResend: () => Promise<void>;
     onCancel: () => void;
@@ -15,6 +18,7 @@ interface EmailVerificationFormProps {
 
 export function EmailVerificationForm({
     email,
+    verificationChannel = "email",
     onVerify,
     onResend,
     onCancel,
@@ -70,7 +74,7 @@ export function EmailVerificationForm({
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
         e.preventDefault();
         const verificationCode = code.join("");
         if (verificationCode.length !== 6) {
@@ -86,7 +90,7 @@ export function EmailVerificationForm({
             await onResend();
             setResendCooldown(60);
             setError(null);
-        } catch (err) {
+        } catch {
             setError("Failed to resend code. Please try again.");
         } finally {
             setResending(false);
@@ -115,9 +119,14 @@ export function EmailVerificationForm({
                         <CheckCircle2 className="h-5 w-5 text-accent" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-foreground">Verify your email</h3>
+                        <h3 className="text-lg font-semibold text-foreground">
+                            {verificationChannel === "phone" ? "Verify your phone" : "Verify your email"}
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                            We've sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>
+                            {verificationChannel === "phone"
+                                ? "We have sent a 6-digit code via SMS to "
+                                : "We have sent a 6-digit code to "}
+                            <span className="font-medium text-foreground">{email}</span>
                         </p>
                     </div>
                 </div>
@@ -163,7 +172,11 @@ export function EmailVerificationForm({
                                     <span>Verifying...</span>
                                 </>
                             ) : (
-                                <span>Verify & Update Email</span>
+                                <span>
+                                    {verificationChannel === "phone"
+                                        ? "Verify & update phone"
+                                        : "Verify & Update Email"}
+                                </span>
                             )}
                         </button>
 

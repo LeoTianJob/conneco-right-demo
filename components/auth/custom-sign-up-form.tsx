@@ -2,36 +2,47 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useSignUp } from "@clerk/nextjs";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SocialAuthButtons, type OAuthStrategy } from "./social-auth-buttons";
+import {
+  getErrorMessageFromUnknown,
+  navigateToResolvedUrl,
+  type PreventDefaultEvent,
+} from "@/lib/auth-client-utils";
 
 type SignUpType = "personal" | "institution";
 
 const SSO_CALLBACK_URL = "/sso-callback";
 
-function getErrorMessage(
-  errors: ReturnType<typeof useSignUp>["errors"]
-): string | undefined {
+/**
+ * @description Extracts a stable UI error message from Clerk sign-up error payload.
+ * @param errors Error payload returned by Clerk `useSignUp`.
+ * @returns The best available message or a generic fallback.
+ * @throws Never throws.
+ */
+function getErrorMessage(errors: ReturnType<typeof useSignUp>["errors"]): string | undefined {
   if (!errors) return undefined;
-  const err = errors as unknown as {
-    fields?: Record<string, { message?: string }>;
-    message?: string;
-  };
-  return (
-    err.fields?.email_address?.message ??
-    err.fields?.password?.message ??
-    err.message ??
-    "Something went wrong. Please try again."
-  );
+  const unknownError = errors as unknown;
+  const message = getErrorMessageFromUnknown(unknownError);
+  return message;
 }
 
-export function CustomSignUpForm() {
+interface CustomSignUpFormProps {
+  /** Sanitized in-app path after sign-up (from server `searchParams`). */
+  redirectUrl: string;
+}
+
+/**
+ * @description Renders custom sign-up flow including credential form, verification step, and OAuth.
+ * @param redirectUrl Post-auth destination; must be a safe relative path.
+ * @returns JSX for sign-up with optional email code verification step.
+ * @throws May surface runtime errors from Clerk network operations when unexpected failures occur.
+ */
+export function CustomSignUpForm({ redirectUrl }: CustomSignUpFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect_url") ?? "/profile";
 
   const { signUp, errors, fetchStatus } = useSignUp();
 
@@ -48,71 +59,97 @@ export function CustomSignUpForm() {
   const isFetching = fetchStatus === "fetching";
   const errorMessage = getErrorMessage(errors);
 
-  const handleSubmitForm = async (e: { preventDefault: () => void }) => {
+  /**
+   * @description Submits user credentials for account creation and routes to verification when required.
+   * @param e Submit event with preventDefault contract.
+   * @returns Promise that resolves after sign-up side effects are triggered.
+   * @throws Can throw Clerk SDK errors when sign-up APIs fail unexpectedly.
+   */
+  const handleSubmitForm = async (e: PreventDefaultEvent): Promise<void> => {
     e.preventDefault();
     if (!signUp) return;
     if (password !== confirmPassword) return;
 
-    const { error } = await signUp.password({
-      emailAddress: email,
-      password,
-      firstName: firstName.trim() || undefined,
-      lastName: lastName.trim() || undefined,
-    });
-
-    if (error) return;
-
-    if (signUp.status === "complete") {
-      await signUp.finalize({
-        navigate: async () => {
-          if (redirectUrl.startsWith("http")) {
-            window.location.href = redirectUrl;
-          } else {
-            router.push(redirectUrl);
-          }
-        },
+    try {
+      const { error } = await signUp.password({
+        emailAddress: email,
+        password,
+        firstName: firstName.trim() || undefined,
+        lastName: lastName.trim() || undefined,
       });
-      return;
-    }
 
-    const unverified = signUp.unverifiedFields as string[] | undefined;
-    const needsEmailVerification = unverified?.includes("email_address");
-    if (needsEmailVerification) {
-      const { error: verifyError } = await signUp.verifications.sendEmailCode();
-      if (!verifyError) setStep("verify");
+      if (error) return;
+
+      if (signUp.status === "complete") {
+        await signUp.finalize({
+          navigate: async () => {
+            await navigateToResolvedUrl(router, redirectUrl);
+          },
+        });
+        return;
+      }
+
+      const unverified = signUp.unverifiedFields;
+      const needsEmailVerification =
+        Array.isArray(unverified) && unverified.includes("email_address");
+      if (needsEmailVerification) {
+        const { error: verifyError } = await signUp.verifications.sendEmailCode();
+        if (!verifyError) setStep("verify");
+      }
+    } catch (error: unknown) {
+      console.error("[sign-up] Failed credential sign-up:", getErrorMessageFromUnknown(error));
     }
   };
 
-  const handleSubmitVerification = async (e: { preventDefault: () => void }) => {
+  /**
+   * @description Verifies submitted email code and finalizes sign-up session if complete.
+   * @param e Submit event with preventDefault contract.
+   * @returns Promise that resolves after verification/finalization side effects run.
+   * @throws Can throw Clerk SDK errors when verification APIs fail unexpectedly.
+   */
+  const handleSubmitVerification = async (e: PreventDefaultEvent): Promise<void> => {
     e.preventDefault();
     if (!signUp || !verificationCode.trim()) return;
 
-    const { error } = await signUp.verifications.verifyEmailCode({
-      code: verificationCode.trim(),
-    });
-
-    if (error) return;
-
-    if (signUp.status === "complete") {
-      await signUp.finalize({
-        navigate: async () => {
-          if (redirectUrl.startsWith("http")) {
-            window.location.href = redirectUrl;
-          } else {
-            router.push(redirectUrl);
-          }
-        },
+    try {
+      const { error } = await signUp.verifications.verifyEmailCode({
+        code: verificationCode.trim(),
       });
+
+      if (error) return;
+
+      if (signUp.status === "complete") {
+        await signUp.finalize({
+          navigate: async () => {
+            await navigateToResolvedUrl(router, redirectUrl);
+          },
+        });
+      }
+    } catch (error: unknown) {
+      console.error(
+        "[sign-up] Failed email verification:",
+        getErrorMessageFromUnknown(error),
+      );
     }
   };
 
-  const handleSignUpWith = async (strategy: OAuthStrategy) => {
+  /**
+   * @description Starts OAuth sign-up flow for the selected provider.
+   * @param strategy Clerk OAuth strategy for registration.
+   * @returns Promise that resolves after Clerk redirect initiation.
+   * @throws Can throw Clerk SDK errors when provider initialization fails.
+   */
+  const handleSignUpWith = async (strategy: OAuthStrategy): Promise<void> => {
     if (!signUp) return;
-    await signUp.sso({
-      strategy,
-      redirectCallbackUrl: SSO_CALLBACK_URL,
-      redirectUrl,
-    });
+    try {
+      await signUp.sso({
+        strategy,
+        redirectCallbackUrl: SSO_CALLBACK_URL,
+        redirectUrl,
+      });
+    } catch (error: unknown) {
+      console.error("[sign-up] Failed OAuth sign-up:", getErrorMessageFromUnknown(error));
+    }
   };
 
   const inputBase =
@@ -273,6 +310,9 @@ export function CustomSignUpForm() {
           <p className="text-xs text-destructive">Passwords do not match.</p>
         )}
 
+        {/* Clerk's CAPTCHA widget */}
+        <div id="clerk-captcha" />
+        
         <button
           type="submit"
           disabled={isFetching || (!!password && !!confirmPassword && password !== confirmPassword)}

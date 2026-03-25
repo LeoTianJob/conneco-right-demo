@@ -104,7 +104,7 @@ conneco-right-demo/
 │   │   └── page.tsx              # Custom sign-in (CustomSignInForm)
 │   ├── sign-up/[[...sign-up]]/
 │   │   └── page.tsx              # Clerk SignUp with AuthLayout
-│   ├── sso-callback/page.tsx     # OAuth redirect handler after Google/Apple sign-in
+│   ├── sso-callback/page.tsx     # OAuth redirect handler after Google/Facebook sign-in
 │   └── api/
 │       └── webhooks/
 │           └── clerk/
@@ -112,7 +112,7 @@ conneco-right-demo/
 ├── components/
 │   ├── auth/
 │   │   ├── custom-sign-in-form.tsx   # Personal/Institution tabs, password + OAuth (useSignIn)
-│   │   └── social-auth-buttons.tsx   # Google/Apple OAuth buttons
+│   │   └── social-auth-buttons.tsx   # Google/Facebook OAuth buttons
 │   ├── auth-layout.tsx           # Two-column auth shell (form left, quote carousel right)
 │   ├── admin/                    # Admin dashboard widgets (e.g. stats, charts, tables)
 │   ├── profile/                  # Profile sections, sidebar, settings, asset gallery, etc.
@@ -129,7 +129,7 @@ conneco-right-demo/
 ├── supabase/
 │   ├── config.toml               # Local Supabase config (ports, auth, API, etc.)
 │   ├── migrations/
-│   │   └── 20250312000000_clerk_profiles_institutions.sql   # profiles, institution, profile_institutions, RLS
+│   │   └── 20250101000000_baseline.sql   # single baseline: profiles (uuid + clerk_id), institution, identities, RLS
 │   └── snippets/                 # Ad-hoc SQL (e.g. queries)
 ├── docs/
 │   ├── ngrok-webhooks.md         # How to expose local app for Clerk webhooks
@@ -169,7 +169,7 @@ So: **Clerk is the source of truth for identity**; **Supabase stores profile dat
 - The route verifies the body with `CLERK_WEBHOOK_SECRET` using the **svix** library.
 - On `user.created` or `user.updated`, it:
   - Resolves primary email and `user_type` from `public_metadata`.
-  - Creates a **Supabase client with the service role key** (bypasses RLS) and upserts into `profiles` (id = Clerk user ID, email, first_name, last_name, user_type, updated_at).
+  - Creates a **Supabase client with the service role key** (bypasses RLS) and upserts into `profiles` (`clerk_id` = Clerk user ID, email, names, `user_type`, `image_url`, `updated_at`; internal `id` is uuid).
 
 So **Clerk communicates with Supabase only indirectly**: Clerk → your webhook → Supabase. The webhook is the only place that writes user profile data from Clerk into Supabase.
 
@@ -185,10 +185,11 @@ So **the app talks to Supabase with the Clerk session token** so that RLS polici
 
 ### 3.4 Database: RLS and Clerk User ID
 
-**File:** `supabase/migrations/20250312000000_clerk_profiles_institutions.sql`
+**File:** `supabase/migrations/20250101000000_baseline.sql`
 
 - Defines `requesting_user_id()` which reads `current_setting('request.jwt.claims', true)::json->>'sub'` — i.e. the Clerk user ID from the JWT.
-- RLS on `profiles`: users can SELECT and UPDATE only where `requesting_user_id() = id` (id is the Clerk user ID).
+- RLS on `profiles`: users can SELECT and UPDATE only where `requesting_user_id() = clerk_id` (`clerk_id` stores the Clerk user ID; row PK is internal uuid `id`).
+- Child tables (`profile_institutions`, `user_identities`) use policies that join `profiles` so the same `sub` matches `profiles.clerk_id`.
 - So **Supabase trusts the JWT’s `sub`** (set by Clerk when using the recommended third-party integration) to enforce “own row only” access.
 
 **Summary:** Clerk and Supabase work together by (1) syncing users into Supabase via your webhook, and (2) sending the Clerk session token to Supabase on every request so RLS can restrict access by that same user ID.
@@ -226,19 +227,23 @@ The project uses the **recommended** approach: Clerk as Supabase third-party aut
   - `id` (uuid, PK), `name`, `institution_type`, `attributes` (jsonb), `created_at`.
 
 - **`profiles`**  
-  - `id` (text, PK) = **Clerk user ID**.  
-  - `email`, `first_name`, `last_name`, `user_type` (default `'individual'`), `institution_id` (FK), `attributes` (jsonb), `created_at`, `updated_at`.  
+  - `id` (uuid, PK, default `gen_random_uuid()`), **`clerk_id` (text, unique)** = Clerk user ID.  
+  - `email` (unique), `first_name`, `last_name`, `image_url`, `user_type` (default `'individual'`), `institution_id` (FK), `attributes` (jsonb), `created_at`, `updated_at`.  
+  - Soft-delete / lifecycle: `deleted_at`, `status` (`active` | `deleted` | `recovered`), `scheduled_deletion_time`.  
   - Trigger: `profiles_updated_at` sets `updated_at` on UPDATE.
 
 - **`profile_institutions`**  
-  - Many-to-many: `profile_id` (→ profiles.id), `institution_id` (→ institution.id), `created_at`.  
+  - Many-to-many: `profile_id` (uuid → `profiles.id` ON UPDATE CASCADE), `institution_id` (→ institution.id), `created_at`.  
   - PK (`profile_id`, `institution_id`).
+
+- **`user_identities`**  
+  - Linked OAuth accounts per profile: `id` (Clerk external account id), `profile_id` (uuid → `profiles.id` ON UPDATE CASCADE), provider fields, `linked_at`.
 
 **RLS (summary):**
 
-- **profiles:** SELECT and UPDATE only where `requesting_user_id() = id`.
+- **profiles:** SELECT and UPDATE only where `requesting_user_id() = clerk_id`.
 - **institution:** SELECT for authenticated; writes typically via service role.
-- **profile_institutions:** SELECT/INSERT/DELETE only where `requesting_user_id() = profile_id`.
+- **profile_institutions / user_identities:** own rows only via `EXISTS (profiles p WHERE p.id = profile_id AND p.clerk_id = requesting_user_id())`.
 
 ### 5.2 Migrating Data: Local → Hosted (e.g. Web)
 
@@ -249,7 +254,7 @@ The project uses the **recommended** approach: Clerk as Supabase third-party aut
    Or use `pg_dump` against local DB (see `supabase status` for connection string).
 
 2. **Apply migrations on hosted project** (if not already):
-   - In Supabase Dashboard → SQL Editor, run the contents of `supabase/migrations/20250312000000_clerk_profiles_institutions.sql`, or
+   - In Supabase Dashboard → SQL Editor, run the contents of `supabase/migrations/20250101000000_baseline.sql`, or
    - Use Supabase CLI linked to the remote project and run `supabase db push` (or run migrations manually).
 
 3. **Import data (optional):**

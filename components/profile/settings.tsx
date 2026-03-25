@@ -620,13 +620,18 @@ export function Settings({ user: initialUser }: ProfileSettingsProps): JSX.Eleme
           setIsVerifyingLoading(false);
           return;
         }
-        const addr = user.primaryEmailAddress?.emailAddress ?? profileRef.current.email;
+        const addr = newEmail.emailAddress.trim();
         setCommittedBaseline((prev) => ({ ...prev, email: addr }));
         setProfile((p) => ({ ...p, email: addr }));
         setIsVerifying(false);
         setNewEmail(undefined);
         setIsVerifyingLoading(false);
         setStatusMessage("Email updated and verified successfully.");
+        try {
+          await userRef.current?.reload();
+        } catch {
+          /* ignore */
+        }
       } else {
         setError("Verification failed.");
         setIsVerifyingLoading(false);
@@ -678,13 +683,18 @@ export function Settings({ user: initialUser }: ProfileSettingsProps): JSX.Eleme
             return;
           }
         }
-        const nextPhone = nationalDigitsForForm(user.primaryPhoneNumber?.phoneNumber);
+        const nextPhone = nationalDigitsForForm(pendingPhone.phoneNumber);
         setCommittedBaseline((prev) => ({ ...prev, phone: nextPhone }));
         setProfile((p) => ({ ...p, phone: nextPhone }));
         setIsVerifyingPhone(false);
         setPendingPhone(undefined);
         setIsVerifyingPhoneLoading(false);
         setStatusMessage("Phone number updated and verified successfully.");
+        try {
+          await userRef.current?.reload();
+        } catch {
+          /* ignore */
+        }
       } else {
         setError("Verification failed.");
         setIsVerifyingPhoneLoading(false);

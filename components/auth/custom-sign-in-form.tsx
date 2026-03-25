@@ -17,16 +17,20 @@ type LoginType = "personal" | "institution";
 
 const SSO_CALLBACK_URL = "/sso-callback";
 
+interface CustomSignInFormProps {
+  /** Sanitized in-app path after sign-in (from server `searchParams`). */
+  redirectUrl: string;
+}
+
 /**
  * @description Renders the custom Clerk sign-in form and orchestrates password/OAuth login flows.
- * @param None
+ * @param redirectUrl Post-auth destination; must be a safe relative path.
  * @returns JSX for sign-in, optional MFA guidance, and social login controls.
  * @throws May surface runtime errors from Clerk network operations when unexpected failures occur.
  */
-export function CustomSignInForm() {
+export function CustomSignInForm({ redirectUrl }: CustomSignInFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect_url") ?? "/profile";
 
   const { signIn, errors, fetchStatus } = useSignIn();
 

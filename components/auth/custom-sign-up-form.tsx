@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useSignUp } from "@clerk/nextjs";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,16 +30,19 @@ function getErrorMessage(errors: ReturnType<typeof useSignUp>["errors"]): string
   return message;
 }
 
+interface CustomSignUpFormProps {
+  /** Sanitized in-app path after sign-up (from server `searchParams`). */
+  redirectUrl: string;
+}
+
 /**
  * @description Renders custom sign-up flow including credential form, verification step, and OAuth.
- * @param None
+ * @param redirectUrl Post-auth destination; must be a safe relative path.
  * @returns JSX for sign-up with optional email code verification step.
  * @throws May surface runtime errors from Clerk network operations when unexpected failures occur.
  */
-export function CustomSignUpForm() {
+export function CustomSignUpForm({ redirectUrl }: CustomSignUpFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect_url") ?? "/profile";
 
   const { signUp, errors, fetchStatus } = useSignUp();
 

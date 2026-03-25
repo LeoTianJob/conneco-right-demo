@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type JSX,
   type ReactNode,
   useCallback,
   useEffect,

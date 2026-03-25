@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type FormEventHandler,
+  type JSX,
 } from "react";
 import { useSession } from "@clerk/nextjs";
 import { Loader2, ShieldCheck, X, AlertCircle } from "lucide-react";
@@ -190,7 +191,7 @@ export function SessionReverificationModal({
           }
           setPanel({
             kind: "unsupported",
-            message: `Second factor “${String(sf.strategy)}” is not supported in this dialog yet.`,
+            message: `Second factor “${String((sf as { strategy: string }).strategy)}” is not supported in this dialog yet.`,
           });
           return;
         }
@@ -320,7 +321,7 @@ export function SessionReverificationModal({
 
       setPanel({
         kind: "unsupported",
-        message: `Second factor “${String(sf.strategy)}” is not supported in this dialog yet.`,
+        message: `Second factor “${String((sf as { strategy: string }).strategy)}” is not supported in this dialog yet.`,
       });
     },
     [session, finishIfComplete],

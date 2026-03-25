@@ -39,6 +39,11 @@ interface ClerkWebhookPayload {
   data: ClerkWebhookData
 }
 
+interface ProfileLookupRow {
+  id: string
+  status: string
+}
+
 // ── Helpers ──
 
 /**
@@ -163,35 +168,154 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    const now = new Date().toISOString()
+    const accounts = evt.data.external_accounts ?? []
 
-    // 1. Upsert profile
-    const { error: profileError } = await supabase.from('profiles').upsert(
-      {
-        id: evt.data.id,
-        email,
-        first_name: evt.data.first_name ?? null,
-        last_name: evt.data.last_name ?? null,
-        image_url: evt.data.image_url ?? null,
-        user_type: getUserType(evt.data),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'id' },
-    )
+    // 1) Always match by clerk_id first.
+    const { data: existingByClerkId, error: existingByClerkIdError } = await supabase
+      .from('profiles')
+      .select('id, status')
+      .eq('clerk_id', evt.data.id)
+      .maybeSingle()
 
-    if (profileError) {
-      console.error('[webhooks/clerk] Profile upsert failed:', profileError)
+    if (existingByClerkIdError) {
+      console.error('[webhooks/clerk] Failed to query profile by clerk_id:', existingByClerkIdError)
       return NextResponse.json({ received: true })
     }
+    const existingProfile = existingByClerkId as ProfileLookupRow | null
 
-    // 2. Sync linked social providers (replace strategy)
-    // Clerk sends the complete external_accounts array on every event,
-    // so we delete stale rows and insert the current set.
-    const accounts = evt.data.external_accounts ?? []
+    let profileUuid: string | null = null
+
+    if (evt.type === 'user.created') {
+        // 2a) New sign-up: if a deleted profile exists with the same email, reactivate that UUID row.
+      if (!existingProfile) {
+        const { data: deletedByEmail, error: deletedByEmailError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('status', 'deleted')
+          .eq('email', email)
+          .maybeSingle()
+
+        if (deletedByEmailError) {
+          console.error('[webhooks/clerk] Failed to query deleted profile by email:', deletedByEmailError)
+          return NextResponse.json({ received: true })
+        }
+
+        const reactivationTarget = deletedByEmail as { id: string } | null
+        if (reactivationTarget?.id) {
+          const { data: reactivated, error: reactivateError } = await supabase
+            .from('profiles')
+            .update({
+              clerk_id: evt.data.id,
+              email,
+              first_name: evt.data.first_name ?? null,
+              last_name: evt.data.last_name ?? null,
+              image_url: evt.data.image_url ?? null,
+              user_type: getUserType(evt.data),
+              status: 'active',
+              deleted_at: null,
+              scheduled_deletion_time: null,
+              updated_at: now,
+            })
+            .eq('id', reactivationTarget.id)
+            .select('id')
+            .single()
+
+          if (reactivateError || !reactivated?.id) {
+            console.error('[webhooks/clerk] Reactivation update failed:', reactivateError)
+            return NextResponse.json({ received: true })
+          }
+          profileUuid = reactivated.id
+        }
+      }
+
+      // 2b) Normal create path: insert a fresh profile if no clerk/email match reactivation happened.
+      if (!profileUuid) {
+        if (existingProfile?.id) {
+          const { data: updated, error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              email,
+              first_name: evt.data.first_name ?? null,
+              last_name: evt.data.last_name ?? null,
+              image_url: evt.data.image_url ?? null,
+              user_type: getUserType(evt.data),
+              status: 'active',
+              deleted_at: null,
+              scheduled_deletion_time: null,
+              updated_at: now,
+            })
+            .eq('id', existingProfile.id)
+            .select('id')
+            .single()
+
+          if (updateError || !updated?.id) {
+            console.error('[webhooks/clerk] Create sync update by clerk_id failed:', updateError)
+            return NextResponse.json({ received: true })
+          }
+          profileUuid = updated.id
+        } else {
+          const { data: inserted, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              clerk_id: evt.data.id,
+              email,
+              first_name: evt.data.first_name ?? null,
+              last_name: evt.data.last_name ?? null,
+              image_url: evt.data.image_url ?? null,
+              user_type: getUserType(evt.data),
+              status: 'active',
+              deleted_at: null,
+              scheduled_deletion_time: null,
+              updated_at: now,
+            })
+            .select('id')
+            .single()
+
+          if (insertError || !inserted?.id) {
+            console.error('[webhooks/clerk] Create sync insert failed:', insertError)
+            return NextResponse.json({ received: true })
+          }
+          profileUuid = inserted.id
+        }
+      }
+    } else {
+      // 3) user.updated: only sync when matched by clerk_id.
+      if (!existingProfile?.id) {
+        console.warn('[webhooks/clerk] user.updated ignored: no profile found for clerk_id', evt.data.id)
+        return NextResponse.json({ received: true })
+      }
+
+      const { data: updated, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          email,
+          first_name: evt.data.first_name ?? null,
+          last_name: evt.data.last_name ?? null,
+          image_url: evt.data.image_url ?? null,
+          user_type: getUserType(evt.data),
+          updated_at: now,
+        })
+        .eq('id', existingProfile.id)
+        .select('id')
+        .single()
+
+      if (updateError || !updated?.id) {
+        console.error('[webhooks/clerk] Update sync failed:', updateError)
+        return NextResponse.json({ received: true })
+      }
+      profileUuid = updated.id
+    }
+
+    if (!profileUuid) {
+      console.error('[webhooks/clerk] Missing profile UUID after sync flow', evt.data.id)
+      return NextResponse.json({ received: true })
+    }
 
     const { error: deleteError } = await supabase
       .from('user_identities')
       .delete()
-      .eq('profile_id', evt.data.id)
+      .eq('profile_id', profileUuid)
 
     if (deleteError) {
       console.error('[webhooks/clerk] Failed to clear old identities:', deleteError)
@@ -200,7 +324,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (accounts.length > 0) {
       const rows = accounts.map((acc) => ({
         id: acc.id,
-        profile_id: evt.data.id,
+        profile_id: profileUuid,
         provider: acc.provider,
         provider_user_id: acc.provider_user_id ?? null,
         provider_email: acc.email_address ?? null,
@@ -210,7 +334,6 @@ export async function POST(request: NextRequest): Promise<Response> {
       const { error: insertError } = await supabase
         .from('user_identities')
         .insert(rows)
-
       if (insertError) {
         console.error('[webhooks/clerk] Failed to insert identities:', insertError)
       }

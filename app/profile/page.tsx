@@ -106,7 +106,15 @@ const STORAGE_USED = 45;
 const STORAGE_TOTAL = 100;
 
 export default async function DashboardPage() {
-    const user = await currentUser();
+    let user;
+    try {
+        user = await currentUser();
+    } catch {
+        // Clerk throws when the user has been deleted but the session cookie is
+        // still present (e.g. immediately after account deactivation). Treat it
+        // the same as a missing session and redirect to sign-in.
+        redirect("/sign-in");
+    }
 
     if (!user) {
         redirect("/sign-in");

@@ -9,12 +9,13 @@ export interface DeleteUserAccountResult {
 }
 
 interface ProfileSoftDeleteRow {
-  email: string
   status: string
 }
 
 /**
- * @description Implements a robust soft-delete with email masking to preserve audit trails while allowing for future re-registration with the same email.
+ * @description Soft-deletes a user account: sets status to 'deleted' and records deleted_at,
+ * while preserving the original email in place so the webhook's email-based reactivation lookup
+ * works correctly if the same address signs up again.
  * @param userId Clerk user id; must match the signed-in session.
  */
 export async function deleteUserAccount(userId: string): Promise<DeleteUserAccountResult> {
@@ -32,8 +33,8 @@ export async function deleteUserAccount(userId: string): Promise<DeleteUserAccou
 
   const { data: row, error: fetchError } = await supabase
     .from('profiles')
-    .select('email, status')
-    .eq('id', userId)
+    .select('status')
+    .eq('clerk_id', userId)
     .maybeSingle()
 
   if (fetchError) {
@@ -48,18 +49,13 @@ export async function deleteUserAccount(userId: string): Promise<DeleteUserAccou
     return { success: false, error: 'Account is already deactivated' }
   }
 
-  const previousEmail = profile.email
-  const maskedEmail = `deleted_${userId}`
-
   const { error: updateError } = await supabase
     .from('profiles')
     .update({
       status: 'deleted',
-      original_email: previousEmail,
-      email: maskedEmail,
       deleted_at: new Date().toISOString(),
     })
-    .eq('id', userId)
+    .eq('clerk_id', userId)
     .eq('status', 'active')
 
   if (updateError) {
@@ -74,11 +70,9 @@ export async function deleteUserAccount(userId: string): Promise<DeleteUserAccou
       .from('profiles')
       .update({
         status: 'active',
-        original_email: null,
-        email: previousEmail,
         deleted_at: null,
       })
-      .eq('id', userId)
+      .eq('clerk_id', userId)
 
     return {
       success: false,

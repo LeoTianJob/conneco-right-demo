@@ -9,7 +9,8 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
-import { Camera, Loader2, LogOut, Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, Camera, Loader2, LogOut, Eye, EyeOff } from "lucide-react";
 import { useClerk, useReverification, useSession, useUser } from "@clerk/nextjs";
 import {
   isClerkRuntimeError,
@@ -34,6 +35,7 @@ import {
   phoneComparable,
   sanitizeUsCanadaPhoneInput,
 } from "@/lib/phone-e164";
+import { deleteUserAccount } from "@/app/profile/actions";
 
 /**
  * Reverification — **Phase 1 (baseline)**. No runtime behavior change yet; documents scope for Phases 2–3.
@@ -357,6 +359,10 @@ export function Settings({ user: initialUser }: ProfileSettingsProps): JSX.Eleme
 
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const [deactivateConfirmOpen, setDeactivateConfirmOpen] = useState(false);
+  const [deactivatePending, setDeactivatePending] = useState(false);
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
 
   type NeedsRev = {
     complete: () => void;
@@ -757,6 +763,8 @@ export function Settings({ user: initialUser }: ProfileSettingsProps): JSX.Eleme
     }
     setFallbackRevModalOpen(false);
     setSessionRevPending(false);
+    setDeactivateConfirmOpen(false);
+    setDeactivateError(null);
 
     const phoneToCleanup = pendingPhone;
     if (phoneToCleanup) {
@@ -774,6 +782,22 @@ export function Settings({ user: initialUser }: ProfileSettingsProps): JSX.Eleme
     setConfirmPassword("");
     setError(null);
     setStatusMessage(null);
+  };
+
+  const handleDeactivateAccount = async (): Promise<void> => {
+    if (!user?.id) return;
+    setDeactivateError(null);
+    setDeactivatePending(true);
+    try {
+      const res = await deleteUserAccount(user.id);
+      if (!res.success) {
+        setDeactivateError(res.error ?? "Could not deactivate account.");
+        return;
+      }
+      await signOut({ redirectUrl: "/" });
+    } finally {
+      setDeactivatePending(false);
+    }
   };
 
   return (
@@ -1059,6 +1083,92 @@ export function Settings({ user: initialUser }: ProfileSettingsProps): JSX.Eleme
           />
 
           <CancelEditsFooter onCancel={handleCancelAllLocalEdits} />
+
+          <div className="rounded-xl border border-destructive/25 bg-card p-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle
+                className="mt-0.5 h-5 w-5 shrink-0 text-destructive"
+                strokeWidth={1.5}
+                aria-hidden
+              />
+              <div className="min-w-0 space-y-3">
+                <h2 className="text-sm font-semibold uppercase tracking-widest text-destructive">
+                  Deactivate account
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Your profile will be marked deactivated, your email will be masked in our records so
+                  you can register again with the same address, and your sign-in will be removed. To
+                  recover a deactivated account later, use the{" "}
+                  <Link
+                    href="/contact"
+                    className="font-medium text-accent underline-offset-4 hover:underline"
+                  >
+                    Contact
+                  </Link>{" "}
+                  page — self-service restore is not available yet.
+                </p>
+                {deactivateError ? (
+                  <p className="text-sm font-medium text-destructive">{deactivateError}</p>
+                ) : null}
+                {!deactivateConfirmOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeactivateConfirmOpen(true);
+                      setDeactivateError(null);
+                    }}
+                    disabled={
+                      deactivatePending ||
+                      isVerifying ||
+                      isVerifyingPhone ||
+                      sessionRevPending ||
+                      !user?.id
+                    }
+                    className={cn(
+                      "h-11 rounded-md border border-destructive bg-card px-4 text-sm font-semibold text-destructive transition-colors",
+                      "hover:bg-destructive/10",
+                      "disabled:cursor-not-allowed disabled:opacity-60"
+                    )}
+                  >
+                    Deactivate account
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={() => void handleDeactivateAccount()}
+                      disabled={deactivatePending}
+                      className={cn(
+                        "flex h-11 min-w-[12rem] items-center justify-center rounded-md border border-destructive bg-destructive px-4 text-sm font-semibold text-destructive-foreground transition-colors",
+                        "hover:bg-destructive/90",
+                        "disabled:cursor-not-allowed disabled:opacity-60"
+                      )}
+                    >
+                      {deactivatePending ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Deactivating…
+                        </span>
+                      ) : (
+                        "Yes, deactivate my account"
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeactivateConfirmOpen(false);
+                        setDeactivateError(null);
+                      }}
+                      disabled={deactivatePending}
+                      className="h-11 rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

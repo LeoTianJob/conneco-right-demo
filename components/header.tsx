@@ -51,6 +51,9 @@ export function Header() {
             if (item === "Our Story") {
               href = "/about";
             }
+            if (item === "Contact") {
+              href = "/contact";
+            }
 
             return (
               <Link
@@ -108,6 +111,9 @@ export function Header() {
               let href = `/#${item.toLowerCase()}`;
               if (item === "Our Story") {
                 href = "/about";
+              }
+              if (item === "Contact") {
+                href = "/contact";
               }
 
               return (

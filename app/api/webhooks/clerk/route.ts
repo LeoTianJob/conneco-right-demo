@@ -139,6 +139,15 @@ export async function POST(request: NextRequest): Promise<Response> {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
+  if (evt.type === 'user.deleted') {
+    console.log('[webhooks/clerk] user.deleted audit (secondary confirmation)', {
+      clerkUserId: evt.data.id,
+      receivedAt: new Date().toISOString(),
+      eventType: evt.type,
+    })
+    return NextResponse.json({ received: true })
+  }
+
   if (evt.type !== 'user.created' && evt.type !== 'user.updated') {
     return NextResponse.json({ received: true })
   }
